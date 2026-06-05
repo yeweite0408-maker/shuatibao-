@@ -6,6 +6,7 @@
         <div class="nav-right">
           <div class="nav-links">
             <router-link to="/" class="nav-link">首页</router-link>
+            <router-link to="/leaderboard" class="nav-link">排行榜</router-link>
             <router-link to="/feedback" class="nav-link">意见反馈</router-link>
             <router-link to="/admin" class="nav-link" v-if="auth.isLoggedIn && auth.user.role === 'admin'">管理后台</router-link>
           </div>

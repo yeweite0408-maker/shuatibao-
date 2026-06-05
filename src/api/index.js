@@ -30,6 +30,9 @@ export default {
   toggleBookmark(data) { return api.post('/records/bookmark', data) },
   getWrongQuestions() { return api.get('/records/wrong') },
 
+  // Leaderboard
+  getLeaderboard(type) { return api.get(`/leaderboard/${type}`) },
+
   // Feedback
   getFeedback() { return api.get('/feedback') },
   replyFeedback(id, reply) { return api.patch(`/feedback/${id}/reply`, { reply }) },

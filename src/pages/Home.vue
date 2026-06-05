@@ -45,6 +45,10 @@
           <span class="action-icon">❌</span>
           <span>错题集</span>
         </div>
+        <div class="action-card" @click="$router.push('/leaderboard')">
+          <span class="action-icon">🏆</span>
+          <span>排行榜</span>
+        </div>
         <div class="action-card" @click="$router.push('/admin')" v-if="auth.isLoggedIn && auth.user.role === 'admin'">
           <span class="action-icon">⚙️</span>
           <span>管理后台</span>
@@ -210,8 +214,8 @@ async function goWrong() {
 
 <style scoped>
 .home-page { padding-bottom: 3rem; }
-.hero-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 3rem 0; text-align: center; margin-bottom: 2rem; }
-.hero-title { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.hero-section { background: var(--primary); padding: 3rem 0; text-align: center; margin-bottom: 2rem; }
+.hero-title { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; }
 .hero-desc { color: rgba(255,255,255,0.85); font-size: 1rem; }
 
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }

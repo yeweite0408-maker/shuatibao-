@@ -149,8 +149,8 @@ async function batchImport() {
 
 .quiz-actions { display: flex; gap: 0.75rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
 .btn-quiz { padding: 0.7rem 1.5rem; border: none; border-radius: 10px; font-size: 0.9rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
-.btn-quiz.sequential { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
-.btn-quiz.random { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
+.btn-quiz.sequential { background: var(--primary); color: #fff; }
+.btn-quiz.random { background: #34c759; color: #fff; }
 .btn-quiz.import-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 .btn-quiz:hover { opacity: 0.9; transform: translateY(-1px); }
 

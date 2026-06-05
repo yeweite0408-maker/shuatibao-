@@ -8,6 +8,7 @@ import recordsRouter from './routes/records.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
 import feedbackRouter from './routes/feedback.js'
+import leaderboardRouter from './routes/leaderboard.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -22,6 +23,7 @@ app.use('/api/questions', questionsRouter)
 app.use('/api/records', recordsRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/feedback', feedbackRouter)
+app.use('/api/leaderboard', leaderboardRouter)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // 生产环境：服务前端构建文件

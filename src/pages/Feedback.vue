@@ -135,7 +135,7 @@ async function submit() {
 .preview-img { width: 100%; height: 100%; object-fit: cover; }
 .preview-del { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
 
-.submit-btn { width: 100%; padding: 0.85rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.submit-btn { width: 100%; padding: 0.85rem; border: none; border-radius: 10px; background: var(--primary); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .submit-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 

@@ -1,11 +1,5 @@
 <template>
   <div class="auth-wrapper">
-    <div class="bg-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-    </div>
-
     <div class="auth-container">
       <div class="auth-brand">
         <div class="brand-icon">📚</div>
@@ -128,39 +122,9 @@ async function register() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f2f2f7;
   position: relative;
-  overflow: hidden;
   padding: 1rem;
-}
-
-.bg-shapes { position: absolute; inset: 0; pointer-events: none; }
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.15;
-}
-.shape-1 {
-  width: 500px; height: 500px;
-  background: #fff;
-  top: -150px; right: -100px;
-  animation: float 8s ease-in-out infinite;
-}
-.shape-2 {
-  width: 350px; height: 350px;
-  background: #fff;
-  bottom: -80px; left: -80px;
-  animation: float 10s ease-in-out infinite reverse;
-}
-.shape-3 {
-  width: 200px; height: 200px;
-  background: #fff;
-  top: 40%; left: 10%;
-  animation: float 6s ease-in-out infinite 2s;
-}
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -30px) scale(1.05); }
 }
 
 .auth-container {
@@ -180,12 +144,11 @@ async function register() {
 .brand-title {
   font-size: 2rem;
   font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  letter-spacing: 2px;
+  color: var(--text);
+  letter-spacing: 1px;
 }
 .brand-desc {
-  color: rgba(255,255,255,0.8);
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-top: 0.3rem;
 }
@@ -273,12 +236,12 @@ async function register() {
   padding: 0.9rem;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -286,8 +249,7 @@ async function register() {
   margin-top: 0.5rem;
 }
 .auth-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  background: #0077ed;
 }
 .auth-btn:active:not(:disabled) { transform: translateY(0); }
 .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
