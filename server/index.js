@@ -8,6 +8,7 @@ import recordsRouter from './routes/records.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
 import feedbackRouter from './routes/feedback.js'
+import reportsRouter from './routes/reports.js'
 import leaderboardRouter from './routes/leaderboard.js'
 import examRouter from './routes/exam.js'
 
@@ -26,6 +27,7 @@ app.use('/api/admin', adminRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/leaderboard', leaderboardRouter)
 app.use('/api/exam', examRouter)
+app.use('/api/reports', reportsRouter)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // 生产环境：服务前端构建文件

@@ -82,6 +82,27 @@ router.delete('/subjects/:name', (req, res) => {
   res.json({ success: true })
 })
 
+// 用户详细数据（管理员查看）
+router.get('/users/:id/stats', (req, res) => {
+  const uid = req.params.id
+  const user = get('SELECT id, username, role, created_at FROM users WHERE id = ?', [uid])
+  if (!user) return res.status(404).json({ error: '用户不存在' })
+  const total = get('SELECT COUNT(*) as count FROM records WHERE user_id = ?', [uid])
+  const correct = get('SELECT COUNT(*) as count FROM records WHERE user_id = ? AND is_correct = 1', [uid])
+  const wrong = get('SELECT COUNT(*) as count FROM records WHERE user_id = ? AND is_correct = 0', [uid])
+  const bySubject = all(`
+    SELECT q.subject, COUNT(*) as count, SUM(r.is_correct) * 1.0 / COUNT(*) as rate
+    FROM records r JOIN questions q ON r.question_id = q.id
+    WHERE r.user_id = ? GROUP BY q.subject
+  `, [uid]).map(s => ({ ...s, rate: s.rate ? Math.round(s.rate * 100) : 0 }))
+  const recentRecords = all(`
+    SELECT r.*, q.question, q.type, q.answer
+    FROM records r JOIN questions q ON r.question_id = q.id
+    WHERE r.user_id = ? ORDER BY r.created_at DESC LIMIT 20
+  `, [uid]).map(r => ({ ...r, options: null }))
+  res.json({ user, total: total.count, correct: correct.count, wrong: wrong.count, bySubject, recentRecords })
+})
+
 // 全站统计
 router.get('/stats/overview', (req, res) => {
   const totalUsers = get('SELECT COUNT(*) as count FROM users')

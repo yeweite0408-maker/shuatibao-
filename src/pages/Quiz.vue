@@ -96,6 +96,7 @@
               </div>
             </div>
             <div class="explanation">{{ currentQuestion.explanation }}</div>
+            <button class="report-btn" @click="showReport = true">🚨 题目纠错</button>
 
             <!-- 整体统计 -->
             <div class="global-stats" v-if="questionStats">
@@ -129,6 +130,20 @@
         </div>
       </div>
 
+      <!-- 纠错对话框 -->
+      <div class="modal-overlay" v-if="showReport" @click.self="showReport = false">
+        <div class="modal">
+          <h3>🚨 题目纠错</h3>
+          <p class="modal-hint">请描述题目中的错误</p>
+          <textarea v-model="reportText" class="report-textarea" rows="4" placeholder="如：答案有误、题目描述不准确..." :disabled="reportDone"></textarea>
+          <div v-if="reportDone" class="report-done">✅ 已提交，感谢反馈！</div>
+          <div class="modal-actions" v-if="!reportDone">
+            <button class="btn btn-primary" @click="submitReport">提交</button>
+            <button class="btn btn-secondary" @click="showReport = false">取消</button>
+          </div>
+        </div>
+      </div>
+
       <div class="quiz-card empty" v-else>
         <p>暂无题目，请先<a href="/admin">添加题目</a></p>
       </div>
@@ -155,6 +170,10 @@ const bookmarkedSet = ref(new Set())
 const questionStats = ref(null)
 const autoAdvancing = ref(false)
 const sessionId = ref(route.query.session_id || Date.now().toString(36))
+const showReport = ref(false)
+const reportText = ref('')
+const reportDone = ref(false)
+
 const examMode = ref(!!route.query.exam)
 const timeLimit = ref(parseInt(route.query.timeLimit) || 0)
 const timeRemaining = ref(timeLimit.value * 60)
@@ -307,6 +326,15 @@ function confirmFinishExam() {
   }
 }
 
+async function submitReport() {
+  if (!reportText.value.trim()) { alert('请输入纠错内容'); return }
+  try {
+    await api.submitReport({ question_id: currentQuestion.value.id, content: reportText.value.trim() })
+    reportDone.value = true
+    setTimeout(() => { showReport.value = false; reportDone.value = false; reportText.value = '' }, 2000)
+  } catch {}
+}
+
 function finishQuiz() {
   const review = questions.value.map(q => {
     const userAnswer = answers.value[q.id]
@@ -415,6 +443,16 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 .result-badge.wrong { color: var(--error); }
 .correct-answer { font-size: 0.9rem; color: var(--text-secondary); }
 .explanation { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+.report-btn { margin-top:0.5rem; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.75rem; padding:0; }
+.report-btn:hover { color:var(--error); }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal { background:var(--card); border-radius:14px; padding:1.5rem; width:90%; max-width:420px; }
+.modal h3 { font-size:1.1rem; margin-bottom:0.3rem; }
+.modal-hint { font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.6rem; }
+.report-textarea { width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; resize:vertical; font-family:inherit; background:var(--card); color:var(--text); }
+.report-textarea:focus { outline:none; border-color:var(--primary); }
+.report-done { text-align:center; padding:1rem; color:var(--success); font-weight:500; }
+.modal-actions { display:flex; gap:0.5rem; margin-top:0.8rem; }
 
 /* 全站统计 */
 .global-stats { margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }

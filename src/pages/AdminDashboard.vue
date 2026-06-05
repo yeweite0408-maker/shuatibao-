@@ -21,6 +21,7 @@
         <button class="tab" :class="{ active: tab === 'subjects' }" @click="tab='subjects'">📚 题库</button>
         <button class="tab" :class="{ active: tab === 'pending' }" @click="tab='pending'">⏳ 待审核 <span v-if="overview?.pending" class="tab-badge">{{ overview.pending }}</span></button>
         <button class="tab" :class="{ active: tab === 'users' }" @click="tab='users'">👥 用户</button>
+        <button class="tab" :class="{ active: tab === 'reports' }" @click="tab='reports'">🚨 纠错</button>
         <button class="tab" :class="{ active: tab === 'feedbacks' }" @click="tab='feedbacks'">💬 反馈</button>
       </div>
 
@@ -96,10 +97,61 @@
                 <option value="user">用户</option>
                 <option value="admin">管理员</option>
               </select>
+              <button class="btn-view" @click="viewUser(u.id)">📊</button>
               <button class="btn-del" @click="deleteUser(u.id)" :disabled="isSelf(u.id)">删除</button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 用户详情弹窗 -->
+      <div class="modal-overlay" v-if="userDetail" @click.self="userDetail = null">
+        <div class="modal modal-wide">
+          <h3>📊 {{ userDetail.user.username }} 的学习数据</h3>
+          <div class="ud-stats">
+            <div class="ud-card"><span class="ud-num">{{ userDetail.total }}</span>总答题</div>
+            <div class="ud-card correct"><span class="ud-num">{{ userDetail.correct }}</span>正确</div>
+            <div class="ud-card wrong"><span class="ud-num">{{ userDetail.wrong }}</span>错误</div>
+          </div>
+          <div v-if="userDetail.bySubject?.length" class="ud-subjects">
+            <div class="ud-subj" v-for="s in userDetail.bySubject" :key="s.subject">
+              <span class="ud-lbl">{{ s.subject }}</span>
+              <div class="ud-bar"><div class="ud-fill" :style="{width:s.rate+'%', background:rateColor(s.rate)}"></div></div>
+              <span class="ud-pct">{{ s.rate }}%（{{ s.count }}题）</span>
+            </div>
+          </div>
+          <div v-if="userDetail.recentRecords?.length" class="ud-records">
+            <h4>最近答题</h4>
+            <div class="ud-rec" v-for="r in userDetail.recentRecords.slice(0, 10)" :key="r.id">
+              <span class="ud-rec-icon" :class="r.is_correct ? 'ok' : 'no'">{{ r.is_correct ? '✓' : '✗' }}</span>
+              <span class="ud-rec-q">{{ r.question?.slice(0, 40) }}...</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary" @click="userDetail=null" style="margin-top:0.8rem;width:100%">关闭</button>
+        </div>
+      </div>
+
+      <!-- ====== 题目纠错 ====== -->
+      <div v-show="tab === 'reports'">
+        <div class="report-list" v-if="reports.length">
+          <div class="rp-item" v-for="r in reports" :key="r.id">
+            <div class="rp-header">
+              <span class="rp-subject">{{ r.question_subject }}</span>
+              <span class="rp-user">{{ r.username }}</span>
+              <span class="rp-status" :class="r.status">{{ r.status === 'resolved' ? '已处理' : r.status === 'rejected' ? '已驳回' : '待处理' }}</span>
+              <span class="rp-date">{{ r.created_at?.slice(0, 16) }}</span>
+            </div>
+            <div class="rp-q">{{ r.question_text }}</div>
+            <div class="rp-content">{{ r.content }}</div>
+            <div class="rp-reply" v-if="r.reply"><span class="reply-label">回复：</span>{{ r.reply }}</div>
+            <div class="rp-actions" v-if="r.status === 'pending'">
+              <input v-model="replyTexts[r.id]" class="rp-input" placeholder="回复..." @keyup.enter="resolveReport(r.id, 'resolved')" />
+              <button class="btn-xs btn-approve" @click="resolveReport(r.id, 'resolved')">✓ 处理</button>
+              <button class="btn-xs btn-reject" @click="resolveReport(r.id, 'rejected')">✗ 驳回</button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty">暂无纠错反馈</div>
       </div>
 
       <!-- ====== 意见反馈 ====== -->
@@ -150,6 +202,11 @@ const previewImg = ref(null)
 const expandedSubject = ref(null)
 const searchText = ref('')
 
+const reports = ref([])
+const userDetail = ref(null)
+
+function rateColor(r) { if(r>=70) return 'var(--success)'; if(r>=40) return 'var(--warning)'; return 'var(--error)' }
+
 function typeLabel(t) { const m = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }; return m[t] || t }
 function statusLabel(s) { const m = { approved: '已审核', pending: '待审核', rejected: '已拒绝' }; return m[s] || s }
 function isSelf(id) { return auth.user?.id === id }
@@ -181,17 +238,33 @@ async function loadSubjectQuestions(subject) {
 
 async function loadAll() {
   try {
-    const [ov, pq, us, fb] = await Promise.all([
-      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback()
+    const [ov, pq, us, fb, rp] = await Promise.all([
+      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports()
     ])
     overview.value = ov.data
     pendingQuestions.value = pq.data
     users.value = us.data
     feedbackList.value = fb.data
+    reports.value = rp.data
   } catch {}
 }
 
 onMounted(loadAll)
+
+async function viewUser(id) {
+  try {
+    const res = await api.getUserDetailStats(id)
+    userDetail.value = res.data
+  } catch {}
+}
+
+async function resolveReport(id, status) {
+  const reply = replyTexts.value[id] || ''
+  await api.resolveReport(id, status, reply)
+  replyTexts.value[id] = ''
+  const rp = await api.getReports()
+  reports.value = rp.data
+}
 
 function editQuestion(id) { router.push(`/admin/edit/${id}`) }
 
@@ -348,6 +421,44 @@ async function reply(id) {
 .role-select { padding: 0.25rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.75rem; }
 .btn-del { padding: 0.25rem 0.5rem; border: 1px solid var(--error); border-radius: 6px; background: none; color: var(--error); font-size: 0.75rem; cursor: pointer; }
 .btn-del:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-view { padding:0.25rem 0.4rem; border:1px solid var(--primary); border-radius:6px; background:none; color:var(--primary); font-size:0.8rem; cursor:pointer; }
+.btn-view:hover { background:var(--primary); color:#fff; }
+
+.report-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
+.rp-item { padding:0.8rem; border-top:1px solid var(--border); }
+.rp-item:first-child { border-top:none; }
+.rp-header { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; margin-bottom:0.3rem; flex-wrap:wrap; }
+.rp-subject { font-size:0.65rem; padding:0.1rem 0.3rem; border-radius:4px; background:#e8e8f0; color:#555; }
+.rp-user { font-weight:600; }
+.rp-status { font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:4px; }
+.rp-status.pending { background:#fff3cd; color:#856404; }
+.rp-status.resolved { background:#d4edda; color:var(--success); }
+.rp-status.rejected { background:#f8d7da; color:var(--error); }
+.rp-date { color:var(--text-secondary); margin-left:auto; }
+.rp-q { font-size:0.78rem; color:var(--text-secondary); margin-bottom:0.2rem; }
+.rp-content { font-size:0.85rem; padding:0.4rem; background:var(--bg); border-radius:6px; margin-bottom:0.3rem; }
+.rp-reply { font-size:0.8rem; color:var(--text-secondary); margin-top:0.2rem; }
+.rp-actions { display:flex; gap:0.3rem; margin-top:0.4rem; }
+.rp-input { flex:1; padding:0.3rem 0.5rem; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; background:var(--card); color:var(--text); }
+.rp-input:focus { outline:none; border-color:var(--primary); }
+
+.ud-stats { display:flex; gap:0.5rem; margin:0.8rem 0; }
+.ud-card { flex:1; text-align:center; padding:0.6rem; background:var(--bg); border-radius:8px; font-size:0.78rem; color:var(--text-secondary); }
+.ud-num { display:block; font-size:1.3rem; font-weight:700; color:var(--primary); }
+.ud-card.correct .ud-num { color:var(--success); }
+.ud-card.wrong .ud-num { color:var(--error); }
+.ud-subjects { margin-bottom:0.8rem; }
+.ud-subj { display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; margin-bottom:0.3rem; }
+.ud-lbl { width:4rem; flex-shrink:0; }
+.ud-bar { flex:1; height:12px; background:#e8e8ec; border-radius:6px; overflow:hidden; }
+.ud-fill { height:100%; border-radius:6px; min-width:4px; }
+.ud-pct { width:4rem; text-align:right; flex-shrink:0; }
+.ud-records h4 { font-size:0.85rem; margin-bottom:0.4rem; }
+.ud-rec { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; padding:0.25rem 0; border-top:1px solid var(--border); }
+.ud-rec-icon { font-weight:700; }
+.ud-rec-icon.ok { color:var(--success); }
+.ud-rec-icon.no { color:var(--error); }
+.ud-rec-q { color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* 反馈 */
 .feedback-list { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
@@ -372,6 +483,8 @@ async function reply(id) {
 .empty { text-align: center; padding: 2rem; color: var(--text-secondary); }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; cursor: pointer; }
+.modal-wide { width:90%; max-width:520px; max-height:80vh; overflow-y:auto; background:var(--card); border-radius:14px; padding:1.5rem; cursor:default; }
+.modal-wide h3 { font-size:1.1rem; }
 .preview-full { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 
 @media (max-width: 640px) {
