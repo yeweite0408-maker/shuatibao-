@@ -43,6 +43,15 @@ router.get('/subjects', optionalAuth, (req, res) => {
   }
 })
 
+// 全局搜索
+router.get('/search/all', (req, res) => {
+  const { q } = req.query
+  if (!q || !q.trim()) return res.json([])
+  const keyword = '%' + q.trim() + '%'
+  const rows = all("SELECT id, subject, type, question, LEFT(question, 80) as snippet FROM questions WHERE status = 'approved' AND question LIKE ? ORDER BY created_at DESC LIMIT 30", [keyword])
+  res.json(rows)
+})
+
 // 公开个人题库（发布到公共）
 router.post('/publish', requireAuth, (req, res) => {
   const { subject } = req.body

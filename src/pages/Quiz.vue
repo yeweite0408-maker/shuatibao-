@@ -308,6 +308,19 @@ function confirmFinishExam() {
 }
 
 function finishQuiz() {
+  const review = questions.value.map(q => {
+    const userAnswer = answers.value[q.id]
+    const isCorrect = results.value[q.id]
+    return {
+      question: q.question,
+      type: q.type,
+      answer: q.answer,
+      explanation: q.explanation,
+      userAnswer: userAnswer || '未作答',
+      correct: isCorrect ?? false
+    }
+  })
+  localStorage.setItem('examReview', JSON.stringify(review))
   router.push({ name: 'Result', query: { session_id: sessionId.value } })
 }
 

@@ -75,6 +75,55 @@ router.post('/bookmark', optionalAuth, (req, res) => {
   res.json({ is_bookmarked: !record.is_bookmarked })
 })
 
+router.get('/bookmarked', optionalAuth, (req, res) => {
+  let where, params
+  if (req.user) {
+    where = 'WHERE r.user_id = ?'
+    params = [req.user.id]
+  } else {
+    return res.json([])
+  }
+  const rows = all(`
+    SELECT DISTINCT r.question_id, q.question, q.type, q.options, q.answer, q.explanation, q.subject
+    FROM records r JOIN questions q ON r.question_id = q.id
+    ${where} AND r.is_bookmarked = 1 ORDER BY r.created_at DESC
+  `, params).map(r => ({ ...r, options: r.options ? JSON.parse(r.options) : null }))
+  res.json(rows)
+})
+
+router.get('/stats/user', optionalAuth, (req, res) => {
+  if (!req.user) return res.json({ total: 0, correct: 0 })
+  const userId = req.user.id
+  const total = get('SELECT COUNT(*) as count FROM records WHERE user_id = ?', [userId])
+  const correct = get('SELECT COUNT(*) as count FROM records WHERE user_id = ? AND is_correct = 1', [userId])
+  const wrong = get('SELECT COUNT(*) as count FROM records WHERE user_id = ? AND is_correct = 0', [userId])
+  const bySubject = all(`
+    SELECT q.subject, COUNT(*) as count, SUM(r.is_correct) * 1.0 / COUNT(*) as rate
+    FROM records r JOIN questions q ON r.question_id = q.id
+    WHERE r.user_id = ? GROUP BY q.subject
+  `, [userId]).map(s => ({ ...s, rate: s.rate ? Math.round(s.rate * 100) : 0 }))
+  const daily = all(`
+    SELECT date(created_at) as day, COUNT(*) as count
+    FROM records WHERE user_id = ? AND created_at > date('now', '-30 days')
+    GROUP BY day ORDER BY day
+  `, [userId])
+  const streak = get(`WITH days AS (
+    SELECT DISTINCT date(created_at) as day FROM records WHERE user_id = ? ORDER BY day DESC
+  ), chains AS (
+    SELECT day, julianday(day) - row_number() OVER (ORDER BY day) as grp FROM days
+  ) SELECT COUNT(*) as streak FROM chains WHERE grp = (SELECT grp FROM chains LIMIT 1)`, [userId])
+
+  res.json({
+    total: total.count,
+    correct: correct.count,
+    wrong: wrong.count,
+    rate: total.count > 0 ? Math.round(correct.count / total.count * 100) : 0,
+    bySubject,
+    daily,
+    streak: streak?.streak || 0
+  })
+})
+
 router.get('/wrong', optionalAuth, (req, res) => {
   let where, params
   if (req.user) {

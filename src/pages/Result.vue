@@ -33,6 +33,24 @@
       </div>
 
       <!-- 考试模式：显示得分 -->
+      <!-- 考试回顾：逐题查看 -->
+      <div class="exam-review" v-if="reviewList.length">
+        <h3>📋 答题回顾</h3>
+        <div class="rv-item" v-for="(item, idx) in reviewList" :key="idx">
+          <div class="rv-header">
+            <span class="rv-num">{{ idx + 1 }}</span>
+            <span class="rv-type">{{ item.typeLabel }}</span>
+            <span class="rv-badge" :class="item.correct ? 'correct' : 'wrong'">{{ item.correct ? '✓' : '✗' }}</span>
+          </div>
+          <div class="rv-q">{{ item.question }}</div>
+          <div class="rv-answer" v-if="!item.correct">
+            你的答案：<span class="rv-wrong">{{ item.userAnswer }}</span>
+            正确答案：<span class="rv-right">{{ item.correctAnswer }}</span>
+          </div>
+          <div class="rv-explanation" v-if="item.explanation">{{ item.explanation }}</div>
+        </div>
+      </div>
+
       <div class="exam-score" v-if="examScore !== null">
         <div class="score-big">{{ examScore.correct }}/{{ examScore.total }}</div>
         <p class="score-sub">得分</p>
@@ -65,6 +83,7 @@ const route = useRoute()
 const router = useRouter()
 const stats = ref(null)
 const examScore = ref(null)
+const reviewList = ref([])
 
 function typeLabel(t) { const m = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }; return m[t] || t }
 
@@ -84,6 +103,10 @@ onMounted(async () => {
     const data = res.data
     data.correctRate = data.total > 0 ? Math.round(data.correct / data.total * 100) : 0
     stats.value = data
+
+    // 加载答题回顾
+    const review = JSON.parse(localStorage.getItem('examReview') || '[]')
+    if (review.length) reviewList.value = review.map(r => ({ ...r, typeLabel: typeLabel(r.type) }))
 
     // 计算考试得分
     const config = JSON.parse(localStorage.getItem('examConfig') || 'null')
@@ -144,6 +167,21 @@ function retry() {
 .wrong-q { font-weight: 500; margin-bottom: 0.3rem; font-size: 0.9rem; }
 .wrong-answer { font-size: 0.85rem; color: var(--error); margin-bottom: 0.2rem; }
 .wrong-explanation { font-size: 0.8rem; color: var(--text-secondary); }
+.exam-review { margin:1rem 0; background:var(--card); border-radius:var(--radius); border:1px solid var(--border); padding:1rem; text-align:left; }
+.exam-review h3 { font-size:0.95rem; margin-bottom:0.7rem; }
+.rv-item { padding:0.6rem 0; border-top:1px solid var(--border); }
+.rv-item:first-child { border-top:none; }
+.rv-header { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; }
+.rv-num { width:1.5rem; height:1.5rem; border-radius:50%; background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:600; }
+.rv-type { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; background:var(--bg); color:var(--text-secondary); }
+.rv-badge { font-size:0.75rem; font-weight:700; }
+.rv-badge.correct { color:var(--success); }
+.rv-badge.wrong { color:var(--error); }
+.rv-q { font-size:0.85rem; margin-bottom:0.25rem; }
+.rv-answer { font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.2rem; }
+.rv-wrong { color:var(--error); font-weight:600; margin-right:0.5rem; }
+.rv-right { color:var(--success); font-weight:600; }
+.rv-explanation { font-size:0.78rem; color:var(--text-secondary); }
 .result-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; }
 
 @media (max-width: 640px) {

@@ -12,6 +12,18 @@
   --text-secondary: #86868b;
   --radius: 12px;
 }
+.dark {
+  --primary: #0a84ff;
+  --primary-hover: #409cff;
+  --success: #30d158;
+  --error: #ff453a;
+  --warning: #ffd60a;
+  --bg: #1c1c1e;
+  --card: #2c2c2e;
+  --border: #48484a;
+  --text: #f5f5f7;
+  --text-secondary: #98989d;
+}
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
   background: var(--bg);
@@ -19,6 +31,7 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s, color 0.3s;
 }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }

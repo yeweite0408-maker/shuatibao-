@@ -72,6 +72,14 @@
           <span class="action-icon">❌</span>
           <span>错题集</span>
         </div>
+        <div class="action-card" @click="$router.push('/bookmarks')" v-if="auth.isLoggedIn">
+          <span class="action-icon">⭐</span>
+          <span>收藏夹</span>
+        </div>
+        <div class="action-card" @click="$router.push('/stats')" v-if="auth.isLoggedIn">
+          <span class="action-icon">📊</span>
+          <span>学习统计</span>
+        </div>
         <div class="action-card" @click="showExamModal = true">
           <span class="action-icon">📝</span>
           <span>模拟考试</span>

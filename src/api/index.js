@@ -3,12 +3,10 @@ import axios from 'axios'
 const api = axios.create({ baseURL: '/api' })
 
 export default {
-  // Auth
   register(username, password) { return api.post('/auth/register', { username, password }) },
   login(username, password) { return api.post('/auth/login', { username, password }) },
   getMe() { return api.get('/auth/me') },
 
-  // Questions
   getQuestions(params) { return api.get('/questions', { params }) },
   getRandomQuestions(count, subject) {
     let url = `/questions/random?count=${count}`
@@ -24,24 +22,22 @@ export default {
   batchImportQuestions(questions, scope) { return api.post('/questions/batch', { questions, scope }) },
   getSubjects() { return api.get('/questions/subjects') },
   publishSubject(subject) { return api.post('/questions/publish', { subject }) },
+  searchQuestions(q) { return api.get(`/questions/search/all?q=${encodeURIComponent(q)}`) },
 
-  // Records
   submitRecord(data) { return api.post('/records', data) },
   getStats(sessionId) { return api.get(`/records/stats?session_id=${sessionId}`) },
   toggleBookmark(data) { return api.post('/records/bookmark', data) },
   getWrongQuestions() { return api.get('/records/wrong') },
+  getBookmarked() { return api.get('/records/bookmarked') },
+  getUserStats() { return api.get('/records/stats/user') },
 
-  // Exam
   generateExam(subject, config) { return api.post('/exam/generate', { subject, config }) },
 
-  // Leaderboard
   getLeaderboard(type) { return api.get(`/leaderboard/${type}`) },
 
-  // Feedback
   getFeedback() { return api.get('/feedback') },
   replyFeedback(id, reply) { return api.patch(`/feedback/${id}/reply`, { reply }) },
 
-  // Admin
   getAdminUsers() { return api.get('/admin/users') },
   updateUserRole(id, role) { return api.patch(`/admin/users/${id}/role`, { role }) },
   deleteUser(id) { return api.delete(`/admin/users/${id}`) },

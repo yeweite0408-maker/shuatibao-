@@ -33,6 +33,7 @@
               <span class="sa-name">{{ s.subject }}</span>
               <span class="sa-count">{{ s.count }} 题</span>
               <span class="sa-avg" v-if="s.avgCorrect !== null">{{ s.avgCorrect }}% 正确率</span>
+              <button class="btn-sm-icon" @click.stop="exportSubject(s.subject)" title="导出为JSON">📤</button>
               <span class="sa-actions" @click.stop>
                 <button class="btn-sm-icon" @click="renameSubject(s.subject)" title="重命名">✏️</button>
                 <button class="btn-sm-icon" @click="deleteSubject(s.subject)" title="删除题库">🗑️</button>
@@ -226,6 +227,16 @@ async function reject(id) {
 async function changeRole(id, role) {
   if (isSelf(id)) return
   await api.updateUserRole(id, role)
+}
+async function exportSubject(subject) {
+  try {
+    const res = await api.getAllQuestions({ subject })
+    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = subject + '-题库.json'; a.click()
+    URL.revokeObjectURL(url)
+  } catch {}
 }
 async function deleteUser(id) {
   if (isSelf(id) || !confirm('确定删除该用户？')) return
