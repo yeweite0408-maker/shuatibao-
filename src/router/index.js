@@ -13,6 +13,7 @@ import Feedback from '../pages/Feedback.vue'
 import Leaderboard from '../pages/Leaderboard.vue'
 import Bookmarks from '../pages/Bookmarks.vue'
 import Stats from '../pages/Stats.vue'
+import Profile from '../pages/Profile.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home, meta: { requiresAuth: true } },
@@ -25,6 +26,7 @@ const routes = [
   { path: '/leaderboard', name: 'Leaderboard', component: Leaderboard },
   { path: '/bookmarks', name: 'Bookmarks', component: Bookmarks },
   { path: '/stats', name: 'Stats', component: Stats },
+  { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/feedback', name: 'Feedback', component: Feedback },
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },

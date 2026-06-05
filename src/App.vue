@@ -21,7 +21,7 @@
           </div>
           <button class="theme-btn" @click="toggleTheme" :title="isDark ? '亮色模式' : '暗色模式'">{{ isDark ? '☀️' : '🌙' }}</button>
           <div class="nav-user" v-if="auth.isLoggedIn">
-            <span class="user-name">{{ auth.user.username }}</span>
+            <router-link to="/profile" class="user-name">{{ auth.user.username }}</router-link>
             <button class="btn-link" @click="handleLogout">退出</button>
           </div>
           <div class="nav-user" v-else>
@@ -99,7 +99,8 @@ function handleLogout() { clearAuth(); router.push('/login') }
 .nav-link:hover { color: var(--primary); }
 .theme-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0; line-height: 1; }
 .nav-user { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
-.user-name { color: var(--text); font-weight: 500; }
+.user-name { color: var(--text); font-weight: 500; text-decoration: none; }
+.user-name:hover { color: var(--primary); }
 .btn-link { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.82rem; }
 .btn-link:hover { color: var(--error); }
 @media (max-width: 640px) {

@@ -60,44 +60,6 @@
         </div>
       </div>
 
-      <div class="section-header" style="margin-top:2rem;">
-        <h2>快速操作</h2>
-      </div>
-      <div class="quick-actions">
-        <div class="action-card" @click="quickQuiz">
-          <span class="action-icon">🎲</span>
-          <span>随机刷题</span>
-        </div>
-        <div class="action-card" @click="goWrong">
-          <span class="action-icon">❌</span>
-          <span>错题集</span>
-        </div>
-        <div class="action-card" @click="$router.push('/bookmarks')" v-if="auth.isLoggedIn">
-          <span class="action-icon">⭐</span>
-          <span>收藏夹</span>
-        </div>
-        <div class="action-card" @click="$router.push('/stats')" v-if="auth.isLoggedIn">
-          <span class="action-icon">📊</span>
-          <span>学习统计</span>
-        </div>
-        <div class="action-card" @click="showExamModal = true">
-          <span class="action-icon">📝</span>
-          <span>模拟考试</span>
-        </div>
-        <div class="action-card" @click="$router.push('/leaderboard')">
-          <span class="action-icon">🏆</span>
-          <span>排行榜</span>
-        </div>
-        <div class="action-card" @click="$router.push('/admin')" v-if="auth.isLoggedIn && auth.user.role === 'admin'">
-          <span class="action-icon">⚙️</span>
-          <span>管理后台</span>
-        </div>
-        <div class="action-card" @click="$router.push('/admin')">
-          <span class="action-icon">📝</span>
-          <span>上传题目</span>
-        </div>
-      </div>
-
       <div class="last-stats" v-if="lastStats">
         <h3>上次练习</h3>
         <div class="stats-row">
@@ -306,12 +268,6 @@ async function doBatchImport() {
   }
 }
 
-function quickQuiz() {
-  const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
-  localStorage.setItem('lastSessionId', sessionId)
-  router.push({ name: 'Quiz', query: { count: 10, session_id: sessionId } })
-}
-
 async function startHomeExam() {
   const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
   localStorage.setItem('lastSessionId', sid)
@@ -337,15 +293,6 @@ async function publishSubject(name) {
   } catch {}
 }
 
-async function goWrong() {
-  try {
-    const res = await api.getWrongQuestions()
-    if (res.data.length === 0) { alert('暂无错题！'); return }
-    const sessionId = 'wrong-' + Date.now().toString(36)
-    localStorage.setItem('lastSessionId', sessionId)
-    router.push({ name: 'Quiz', query: { session_id: sessionId, wrong: 1 } })
-  } catch { alert('暂无错题！') }
-}
 </script>
 
 <style scoped>
@@ -366,8 +313,6 @@ async function goWrong() {
   .subject-grid { grid-template-columns: 1fr; gap: 0.6rem; }
   .subject-card { padding: 0.8rem 1rem; }
   .card-emoji { font-size: 1.5rem; }
-  .quick-actions { gap: 0.5rem; }
-  .action-card { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
   .stats-row { gap: 0.5rem; }
   .stat-val { font-size: 1.1rem; }
   .modal { padding: 1.2rem; }
@@ -395,10 +340,6 @@ async function goWrong() {
 
 .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
 
-.quick-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 2rem; }
-.action-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.2rem; background: #fff; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; font-size: 0.9rem; transition: all 0.15s; }
-.action-card:hover { border-color: var(--primary); }
-.action-icon { font-size: 1.2rem; }
 
 .last-stats { background: #fff; border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid var(--border); }
 .last-stats h3 { font-size: 0.95rem; margin-bottom: 0.8rem; }
