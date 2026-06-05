@@ -219,6 +219,19 @@ async function goWrong() {
 .btn-new { background: var(--primary); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
 .btn-new:hover { opacity: 0.85; }
 .modal-wide { max-width: 560px; }
+
+@media (max-width: 640px) {
+  .hero-section { padding: 1.5rem 0; }
+  .hero-title { font-size: 1.6rem; }
+  .subject-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+  .subject-card { padding: 0.8rem 1rem; }
+  .card-emoji { font-size: 1.5rem; }
+  .quick-actions { gap: 0.5rem; }
+  .action-card { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+  .stats-row { gap: 0.5rem; }
+  .stat-val { font-size: 1.1rem; }
+  .modal { padding: 1.2rem; }
+}
 .modal-example { background: #f5f5f7; border-radius: 8px; padding: 0.6rem; margin-bottom: 0.5rem; overflow-x: auto; }
 .modal-example pre { font-size: 0.72rem; line-height: 1.4; white-space: pre; }
 .modal-textarea { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 0.85rem; resize: vertical; }

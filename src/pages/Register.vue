@@ -313,4 +313,14 @@ async function register() {
   font-weight: 600;
 }
 .auth-link:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 1.5rem 1.2rem; }
+  .brand-icon { font-size: 2.5rem; }
+  .brand-title { font-size: 1.5rem; }
+  .card-title { font-size: 1.2rem; }
+  .auth-input { padding: 0.75rem 1rem 0.75rem 2.5rem; font-size: 0.9rem; }
+  .input-icon { left: 0.75rem; font-size: 0.95rem; }
+  .auth-container { max-width: 95%; }
+}
 </style>

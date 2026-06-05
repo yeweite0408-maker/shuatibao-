@@ -60,6 +60,20 @@ export async function initDB() {
   try { db.run('ALTER TABLE records ADD COLUMN user_id INTEGER DEFAULT NULL') } catch {}
   try { db.run('ALTER TABLE users ADD COLUMN role TEXT DEFAULT \'user\'') } catch {}
 
+  // 反馈表
+  db.run(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER DEFAULT NULL,
+      username TEXT DEFAULT '',
+      content TEXT NOT NULL,
+      images TEXT DEFAULT '[]',
+      status TEXT DEFAULT 'pending',
+      reply TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
   save()
   return db
 }

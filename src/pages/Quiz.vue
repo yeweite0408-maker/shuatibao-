@@ -365,4 +365,21 @@ onMounted(async () => {
 /* 动画 */
 .fade-enter-active, .fade-leave-active { transition: all 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* 手机端适配 */
+@media (max-width: 640px) {
+  .quiz-layout { flex-direction: column; height: auto; min-height: 100vh; }
+  .sidebar { width: 100%; flex-direction: row; padding: 0.5rem 0.6rem; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .sidebar-header { flex-direction: row; gap: 0.5rem; margin-bottom: 0; flex-shrink: 0; }
+  .question-numbers { flex-direction: row; gap: 0.3rem; }
+  .q-num { width: 32px; height: 32px; font-size: 0.75rem; flex-shrink: 0; }
+  .quiz-main { padding: 0.6rem; }
+  .quiz-card { padding: 1rem; }
+  .q-text { font-size: 0.95rem; }
+  .option { padding: 0.7rem 0.8rem; font-size: 0.9rem; }
+  .q-header { flex-wrap: wrap; }
+  .q-footer { flex-wrap: wrap; gap: 0.5rem; }
+  .bar-chart { gap: 0.25rem; }
+  .bar-item { font-size: 0.75rem; }
+}
 </style>

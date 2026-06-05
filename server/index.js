@@ -7,6 +7,7 @@ import questionsRouter from './routes/questions.js'
 import recordsRouter from './routes/records.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
+import feedbackRouter from './routes/feedback.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -20,6 +21,8 @@ app.use('/api/auth', authRouter)
 app.use('/api/questions', questionsRouter)
 app.use('/api/records', recordsRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/feedback', feedbackRouter)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // 生产环境：服务前端构建文件
 const distPath = path.join(__dirname, '..', 'dist')

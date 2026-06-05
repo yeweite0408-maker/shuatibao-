@@ -98,4 +98,14 @@ function retry() {
 .wrong-answer { font-size: 0.85rem; color: var(--error); margin-bottom: 0.2rem; }
 .wrong-explanation { font-size: 0.8rem; color: var(--text-secondary); }
 .result-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; }
+
+@media (max-width: 640px) {
+  .result-card { margin: 0.5rem; padding: 1.2rem; }
+  .score { font-size: 2.5rem; }
+  .stat-cards { gap: 0.4rem; }
+  .mini-stat { padding: 0.5rem; }
+  .mini-num { font-size: 1rem; }
+  .result-actions { flex-direction: column; }
+  .result-actions .btn { width: 100%; text-align: center; }
+}
 </style>

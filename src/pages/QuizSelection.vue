@@ -171,6 +171,19 @@ async function batchImport() {
 .stats-info.no-data { color: var(--text-secondary); font-weight: 400; }
 .empty { text-align: center; padding: 3rem; color: var(--text-secondary); }
 
+@media (max-width: 640px) {
+  .page-header { padding: 0.8rem 0; }
+  .page-header h1 { font-size: 1.1rem; }
+  .quiz-actions { gap: 0.5rem; }
+  .btn-quiz { padding: 0.5rem 1rem; font-size: 0.8rem; flex: 1; text-align: center; }
+  .table-header, .table-row { padding: 0.5rem 0.6rem; gap: 0.4rem; font-size: 0.78rem; }
+  .col-num { width: 1.8rem; }
+  .col-type { width: 2.8rem; }
+  .col-stats { width: 5.5rem; }
+  .col-q { font-size: 0.82rem; }
+  .modal { padding: 1.2rem; max-width: 100%; margin: 0 0.5rem; }
+}
+
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; }

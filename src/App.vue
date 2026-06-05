@@ -6,6 +6,7 @@
         <div class="nav-right">
           <div class="nav-links">
             <router-link to="/" class="nav-link">首页</router-link>
+            <router-link to="/feedback" class="nav-link">意见反馈</router-link>
             <router-link to="/admin" class="nav-link" v-if="auth.isLoggedIn && auth.user.role === 'admin'">管理后台</router-link>
           </div>
           <div class="nav-user" v-if="auth.isLoggedIn">
@@ -51,4 +52,13 @@ function handleLogout() {
 .user-role-badge { font-size: 0.65rem; background: #e8f4fd; color: var(--primary); padding: 0.1rem 0.4rem; border-radius: 4px; }
 .btn-link { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; }
 .btn-link:hover { color: var(--error); }
+
+@media (max-width: 640px) {
+  .nav-inner { flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 0.8rem; }
+  .nav-links { gap: 0.8rem; }
+  .nav-right { gap: 0.6rem; }
+  .nav-link { font-size: 0.8rem; }
+  .nav-title { font-size: 1rem; }
+  .user-name { font-size: 0.8rem; }
+}
 </style>

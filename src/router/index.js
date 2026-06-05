@@ -9,6 +9,7 @@ import Admin from '../pages/Admin.vue'
 import QuestionEdit from '../pages/QuestionEdit.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
+import Feedback from '../pages/Feedback.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home, meta: { requiresAuth: true } },
@@ -18,6 +19,7 @@ const routes = [
   { path: '/admin', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/admin/questions', name: 'Admin', component: Admin, meta: { requiresAuth: true } },
   { path: '/admin/edit/:id?', name: 'QuestionEdit', component: QuestionEdit, meta: { requiresAuth: true } },
+  { path: '/feedback', name: 'Feedback', component: Feedback },
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },
 ]

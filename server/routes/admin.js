@@ -51,6 +51,21 @@ router.patch('/questions/:id/status', (req, res) => {
   res.json({ success: true })
 })
 
+// 所有题目管理（含未审核的）
+router.get('/questions/all', (req, res) => {
+  const { subject, type, status } = req.query
+  let sql = 'SELECT q.*, u.username as uploader_name FROM questions q LEFT JOIN users u ON q.uploaded_by = u.id'
+  const conditions = []
+  const params = []
+  if (subject) { conditions.push('q.subject = ?'); params.push(subject) }
+  if (type) { conditions.push('q.type = ?'); params.push(type) }
+  if (status) { conditions.push('q.status = ?'); params.push(status) }
+  if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ')
+  sql += ' ORDER BY q.created_at DESC'
+  const rows = all(sql, params).map(r => ({ ...r, options: r.options ? JSON.parse(r.options) : null }))
+  res.json(rows)
+})
+
 // 全站统计
 router.get('/stats/overview', (req, res) => {
   const totalUsers = get('SELECT COUNT(*) as count FROM users')

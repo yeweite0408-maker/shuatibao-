@@ -30,6 +30,10 @@ export default {
   toggleBookmark(data) { return api.post('/records/bookmark', data) },
   getWrongQuestions() { return api.get('/records/wrong') },
 
+  // Feedback
+  getFeedback() { return api.get('/feedback') },
+  replyFeedback(id, reply) { return api.patch(`/feedback/${id}/reply`, { reply }) },
+
   // Admin
   getAdminUsers() { return api.get('/admin/users') },
   updateUserRole(id, role) { return api.patch(`/admin/users/${id}/role`, { role }) },
@@ -37,4 +41,5 @@ export default {
   getPendingQuestions() { return api.get('/admin/questions/pending') },
   updateQuestionStatus(id, status) { return api.patch(`/admin/questions/${id}/status`, { status }) },
   getAdminOverview() { return api.get('/admin/stats/overview') },
+  getAllQuestions(params) { return api.get('/admin/questions/all', { params }) },
 }
