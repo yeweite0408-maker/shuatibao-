@@ -240,7 +240,7 @@ async function batchImport() {
   try {
     // 给每个题目加上当前科目
     const items = data.map(q => ({ ...q, subject: subject.value }))
-    const res = await api.batchImportQuestions(items)
+    const res = await api.batchImportQuestions(items, 'public')
     importResult.value = `✅ 成功导入 ${res.data.imported} 道题${res.data.status === 'pending' ? '（待审核）' : ''}`
     importJson.value = ''
     // 刷新列表

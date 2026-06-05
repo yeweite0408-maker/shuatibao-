@@ -8,16 +8,17 @@
     </div>
 
     <div class="container">
+      <!-- 公共题库 -->
       <div class="section-header">
-        <h2>我的题库</h2>
+        <h2>📖 公共题库</h2>
         <button class="btn-new" @click="showCreateDialog = true">+ 新建题库</button>
       </div>
 
-      <div class="subject-grid" v-if="subjects.length > 0">
+      <div class="subject-grid" v-if="publicSubjects.length > 0">
         <div
           class="subject-card"
-          v-for="s in subjects"
-          :key="s.subject"
+          v-for="s in publicSubjects"
+          :key="'pub-' + s.subject"
           @click="goToSubject(s.subject)"
         >
           <div class="card-emoji">{{ subjectEmoji(s.subject) }}</div>
@@ -28,9 +29,35 @@
           <div class="card-arrow">→</div>
         </div>
       </div>
+      <div v-if="publicSubjects.length === 0 && auth.isLoggedIn" class="empty-state">
+        <p>暂无公共题库</p>
+      </div>
 
-      <div v-else class="empty-state">
-        <p>还没有题库，点击上方按钮新建</p>
+      <!-- 我的题库（登录用户） -->
+      <div v-if="auth.isLoggedIn" style="margin-top: 1.5rem;">
+        <div class="section-header">
+          <h2>👤 我的题库</h2>
+        </div>
+        <div class="subject-grid" v-if="personalSubjects.length > 0">
+          <div
+            class="subject-card personal"
+            v-for="s in personalSubjects"
+            :key="'per-' + s.subject"
+            @click="goToSubject(s.subject)"
+          >
+            <div class="card-emoji">{{ subjectEmoji(s.subject) }}</div>
+            <div class="card-body">
+              <h3 class="card-title">{{ s.subject }} <span class="personal-badge">个人</span></h3>
+              <span class="card-count">{{ s.count }} 道题</span>
+            </div>
+            <div class="card-personal-actions" @click.stop>
+              <button class="btn-publish" @click="publishSubject(s.subject)" title="发布到公共题库">🌐 发布</button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-state">
+          <p>还没有个人题库，创建题目时选择"个人"即可</p>
+        </div>
       </div>
 
       <div class="section-header" style="margin-top:2rem;">
@@ -88,6 +115,14 @@
         <h3>新建题库</h3>
         <p class="modal-hint">输入新题库名称</p>
         <input v-model="newSubjectName" class="modal-input" placeholder="如：JavaScript、Python、数学" @keyup.enter="createSubject" />
+          <div class="dialog-scope">
+          <label class="scope-label">
+            <input type="radio" v-model="newSubjectScope" value="public" /> 🌐 公共题库（所有人可见）
+          </label>
+          <label class="scope-label">
+            <input type="radio" v-model="newSubjectScope" value="private" /> 👤 个人题库（仅自己可见）
+          </label>
+        </div>
         <div class="modal-actions">
           <button class="btn btn-primary" @click="createSubject('manual')">📝 手动添加</button>
           <button class="btn btn-secondary" @click="createSubject('import')">📥 批量导入</button>
@@ -182,10 +217,13 @@ import { auth } from '../stores/auth.js'
 
 const router = useRouter()
 const subjects = ref([])
+const publicSubjects = computed(() => subjects.value.filter(s => !s.isPersonal))
+const personalSubjects = computed(() => subjects.value.filter(s => s.isPersonal))
 const lastStats = ref(null)
 const showCreateDialog = ref(false)
 const showImportDialog = ref(false)
 const newSubjectName = ref('')
+const newSubjectScope = ref('public')
 const importJson = ref('')
 const importing = ref(false)
 const importResult = ref('')
@@ -233,7 +271,7 @@ function createSubject(mode) {
     showCreateDialog.value = false
     showImportDialog.value = true
   } else {
-    router.push(`/admin/edit?subject=${encodeURIComponent(name)}`)
+    router.push(`/admin/edit?subject=${encodeURIComponent(name)}&scope=${newSubjectScope.value}`)
     showCreateDialog.value = false
     newSubjectName.value = ''
   }
@@ -247,7 +285,7 @@ async function doBatchImport() {
   importResult.value = ''
   try {
     const items = data.map(q => ({ ...q, subject: newSubjectName.value.trim() }))
-    const res = await api.batchImportQuestions(items)
+    const res = await api.batchImportQuestions(items, newSubjectScope.value)
     importResult.value = `✅ 成功导入 ${res.data.imported} 道题${res.data.status === 'pending' ? '（待审核）' : ''}`
     importJson.value = ''
     // 刷新题库列表
@@ -280,6 +318,15 @@ async function startHomeExam() {
   if (examConfig.value.subject) query.subject = examConfig.value.subject
   showExamModal.value = false
   router.push({ name: 'Quiz', query })
+}
+
+async function publishSubject(name) {
+  if (!confirm(`确定将"${name}"发布到公共题库吗？所有用户可见。`)) return
+  try {
+    await api.publishSubject(name)
+    const res = await api.getSubjects()
+    subjects.value = res.data
+  } catch {}
 }
 
 async function goWrong() {
@@ -332,6 +379,11 @@ async function goWrong() {
 .card-count { font-size: 0.8rem; color: var(--text-secondary); }
 .card-arrow { color: var(--text-secondary); font-size: 1.2rem; transition: all 0.15s; }
 .subject-card:hover .card-arrow { color: var(--primary); transform: translateX(3px); }
+.subject-card.personal { border-left: 4px solid var(--warning); }
+.personal-badge { font-size: 0.6rem; background: #fff3cd; color: #856404; padding: 0.1rem 0.35rem; border-radius: 4px; vertical-align: middle; }
+.card-personal-actions { flex-shrink: 0; }
+.btn-publish { font-size: 0.7rem; padding: 0.25rem 0.5rem; border: 1px solid var(--primary); border-radius: 6px; background: none; color: var(--primary); cursor: pointer; white-space: nowrap; }
+.btn-publish:hover { background: var(--primary); color: #fff; }
 
 .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
 
@@ -363,6 +415,8 @@ async function goWrong() {
 .et-input { width: 55px; padding: 0.25rem 0.35rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; text-align: center; }
 .et-input:focus { outline: none; border-color: var(--primary); }
 .exam-total { padding: 0.5rem 0.8rem; text-align: right; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border); }
+.dialog-scope { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.8rem; padding: 0.6rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.scope-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 400px; }

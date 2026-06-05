@@ -21,8 +21,9 @@ export default {
   createQuestion(data) { return api.post('/questions', data) },
   updateQuestion(id, data) { return api.put(`/questions/${id}`, data) },
   deleteQuestion(id) { return api.delete(`/questions/${id}`) },
-  batchImportQuestions(questions) { return api.post('/questions/batch', { questions }) },
+  batchImportQuestions(questions, scope) { return api.post('/questions/batch', { questions, scope }) },
   getSubjects() { return api.get('/questions/subjects') },
+  publishSubject(subject) { return api.post('/questions/publish', { subject }) },
 
   // Records
   submitRecord(data) { return api.post('/records', data) },

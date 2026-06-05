@@ -57,6 +57,7 @@ export async function initDB() {
   try { db.run('ALTER TABLE questions ADD COLUMN subject TEXT DEFAULT \'\'') } catch {}
   try { db.run('ALTER TABLE questions ADD COLUMN status TEXT DEFAULT \'approved\'') } catch {}
   try { db.run('ALTER TABLE questions ADD COLUMN uploaded_by INTEGER DEFAULT NULL') } catch {}
+  try { db.run("ALTER TABLE questions ADD COLUMN scope TEXT DEFAULT 'public'") } catch {}
   try { db.run('ALTER TABLE records ADD COLUMN user_id INTEGER DEFAULT NULL') } catch {}
   try { db.run('ALTER TABLE users ADD COLUMN role TEXT DEFAULT \'user\'') } catch {}
 

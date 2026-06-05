@@ -21,10 +21,34 @@ router.get('/', (req, res) => {
   res.json(all(sql, params).map(parseRow))
 })
 
-// 获取所有科目及题目数
-router.get('/subjects', (req, res) => {
-  const rows = all("SELECT subject, COUNT(*) as count FROM questions WHERE status = 'approved' GROUP BY subject ORDER BY subject")
-  res.json(rows)
+// 获取所有科目及题目数（含公共/个人区分）
+router.get('/subjects', optionalAuth, (req, res) => {
+  const userId = req.user?.id
+  if (userId) {
+    // 登录用户：公共 + 自己的个人题库
+    const rows = all(`
+      SELECT subject, COUNT(*) as count,
+        CASE WHEN q.scope IS NULL THEN 'public' ELSE q.scope END as scope,
+        q.uploaded_by,
+        (SELECT username FROM users WHERE id = q.uploaded_by) as creator_name
+      FROM questions q WHERE status = 'approved' AND (
+        q.scope IS NULL OR q.scope = 'public' OR (q.scope = 'private' AND q.uploaded_by = ?))
+      GROUP BY subject, scope, q.uploaded_by ORDER BY scope, subject
+    `, [userId])
+    res.json(rows.map(r => ({ ...r, isPersonal: r.scope === 'private' })))
+  } else {
+    // 未登录：只看公共
+    const rows = all("SELECT subject, COUNT(*) as count FROM questions WHERE status = 'approved' AND (scope IS NULL OR scope = 'public') GROUP BY subject ORDER BY subject")
+    res.json(rows.map(r => ({ ...r, isPersonal: false })))
+  }
+})
+
+// 公开个人题库（发布到公共）
+router.post('/publish', requireAuth, (req, res) => {
+  const { subject } = req.body
+  if (!subject) return res.status(400).json({ error: '请指定题库名称' })
+  const result = run("UPDATE questions SET scope = 'public' WHERE subject = ? AND uploaded_by = ?", [subject, req.user.id])
+  res.json({ success: true, updated: result.changes })
 })
 
 // 按科目获取题目统计（含全局答题情况）
@@ -70,8 +94,8 @@ router.post('/batch', optionalAuth, (req, res) => {
     for (const item of items) {
       if (!item.type || !item.question || !item.answer) continue
       run(
-        'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [item.subject || '', item.type, item.question, item.options ? JSON.stringify(item.options) : null, item.answer, item.explanation || '', status, req.user?.id || null]
+        'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [item.subject || '', item.type, item.question, item.options ? JSON.stringify(item.options) : null, item.answer, item.explanation || '', status, req.user?.id || null, req.body.scope || 'public']
       )
       count++
     }
@@ -88,8 +112,8 @@ router.post('/', optionalAuth, (req, res) => {
   const isAdmin = req.user?.role === 'admin'
   const status = isAdmin ? 'approved' : 'pending'
   const result = run(
-    'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', status, req.user?.id || null]
+    'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', status, req.user?.id || null, req.body.scope || 'public']
   )
   res.status(201).json({ id: result.lastInsertRowid, status })
 })
