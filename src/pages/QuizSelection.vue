@@ -85,40 +85,43 @@
 
     <!-- 模拟考试设置 -->
     <div class="modal-overlay" v-if="showExamSetup" @click.self="showExamSetup = false">
-      <div class="modal">
+      <div class="modal modal-wide">
         <h3>📝 模拟考试 — {{ subject }}</h3>
-        <p class="modal-hint">设置考试参数</p>
-        <div class="exam-form">
-          <div class="exam-field">
-            <label>题目数量</label>
-            <select v-model.number="examConfig.count" class="exam-select">
-              <option :value="5">5 题</option>
-              <option :value="10">10 题</option>
-              <option :value="20">20 题</option>
-              <option :value="0">全部 ({{ questions.length }} 题)</option>
-            </select>
-          </div>
-          <div class="exam-field">
-            <label>时间限制</label>
-            <select v-model.number="examConfig.timeLimit" class="exam-select">
-              <option :value="5">5 分钟</option>
-              <option :value="10">10 分钟</option>
-              <option :value="15">15 分钟</option>
-              <option :value="30">30 分钟</option>
-              <option :value="0">不限时</option>
-            </select>
-          </div>
-          <div class="exam-field">
-            <label>题目类型</label>
-            <div class="exam-types">
-              <label v-for="t in questionTypes" :key="t.value" class="exam-type-check">
-                <input type="checkbox" v-model="t.checked" /> {{ t.label }}
+        <p class="modal-hint">设置各题型的数量和分值</p>
+
+        <div class="exam-time-field">
+          <label>时间限制</label>
+          <select v-model.number="examConfig.timeLimit" class="exam-select">
+            <option :value="5">5 分钟</option>
+            <option :value="10">10 分钟</option>
+            <option :value="15">15 分钟</option>
+            <option :value="30">30 分钟</option>
+            <option :value="60">60 分钟</option>
+            <option :value="0">不限时</option>
+          </select>
+        </div>
+
+        <div class="exam-type-grid">
+          <div class="exam-type-row" v-for="t in examConfig.types" :key="t.type">
+            <span class="et-label">{{ t.label }}</span>
+            <div class="et-inputs">
+              <label class="et-col">
+                <span class="et-col-label">题数</span>
+                <input type="number" v-model.number="t.count" min="0" max="50" class="et-input" />
+              </label>
+              <label class="et-col">
+                <span class="et-col-label">分值/题</span>
+                <input type="number" v-model.number="t.score" min="0" max="100" class="et-input" />
               </label>
             </div>
           </div>
+          <div class="exam-total">
+            总分：<strong>{{ totalScore }}</strong> 分 &nbsp;|&nbsp; 总题数：<strong>{{ totalExamCount }}</strong> 题
+          </div>
         </div>
+
         <div class="modal-actions">
-          <button class="btn btn-primary" @click="startExam">开始考试</button>
+          <button class="btn exam-start" @click="startExam" :disabled="totalExamCount === 0">开始考试</button>
           <button class="btn btn-secondary" @click="showExamSetup = false">取消</button>
         </div>
       </div>
@@ -127,7 +130,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/index.js'
 
@@ -144,13 +147,17 @@ const fileInput = ref(null)
 const selectedFile = ref(null)
 
 const showExamSetup = ref(false)
-const examConfig = ref({ count: 10, timeLimit: 10 })
-const questionTypes = ref([
-  { value: 'single_choice', label: '单选题', checked: true },
-  { value: 'multi_choice', label: '多选题', checked: true },
-  { value: 'true_false', label: '判断题', checked: true },
-  { value: 'fill_blank', label: '填空题', checked: true },
-])
+const examConfig = ref({
+  timeLimit: 10,
+  types: [
+    { type: 'single_choice', label: '单选题', count: 5, score: 5 },
+    { type: 'multi_choice', label: '多选题', count: 3, score: 5 },
+    { type: 'true_false', label: '判断题', count: 2, score: 3 },
+    { type: 'fill_blank', label: '填空题', count: 0, score: 3 },
+  ]
+})
+const totalScore = computed(() => examConfig.value.types.reduce((s, t) => s + t.count * t.score, 0))
+const totalExamCount = computed(() => examConfig.value.types.reduce((s, t) => s + t.count, 0))
 
 function typeLabel(type) {
   const map = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }
@@ -199,19 +206,21 @@ function onFileDrop(e) {
 }
 
 function startExam() {
-  const types = questionTypes.value.filter(t => t.checked).map(t => t.value)
   const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
   localStorage.setItem('lastSessionId', sid)
+  localStorage.setItem('examConfig', JSON.stringify({
+    types: examConfig.value.types.map(t => ({ type: t.type, count: t.count, score: t.score })),
+    totalScore: totalScore.value
+  }))
   showExamSetup.value = false
   router.push({
     name: 'Quiz',
     query: {
-      count: examConfig.value.count || undefined,
       session_id: sid,
       subject: subject.value,
       exam: 1,
       timeLimit: examConfig.value.timeLimit || undefined,
-      types: types.length < 4 ? types.join(',') : undefined
+      examTypes: examConfig.value.types.filter(t => t.count > 0).map(t => `${t.type}:${t.count}:${t.score}`).join(',')
     }
   })
 }
@@ -285,11 +294,21 @@ async function batchImport() {
 .file-dropzone:hover { border-color: var(--primary); color: var(--primary); }
 .file-icon { font-size: 2rem; }
 .file-name { font-size: 0.82rem; color: var(--primary); margin-top: 0.3rem; text-align: center; }
-.exam-form { display: flex; flex-direction: column; gap: 0.8rem; }
-.exam-field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
+.modal-wide { max-width: 520px; }
+.exam-time-field { margin-bottom: 0.8rem; }
+.exam-time-field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
 .exam-select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--card); }
-.exam-types { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.exam-type-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; }
+.exam-type-grid { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 0.5rem; }
+.exam-type-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.8rem; border-top: 1px solid var(--border); }
+.exam-type-row:first-child { border-top: none; }
+.et-label { font-weight: 500; font-size: 0.85rem; min-width: 4rem; }
+.et-inputs { display: flex; gap: 0.8rem; }
+.et-col { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.et-col-label { font-size: 0.7rem; color: var(--text-secondary); }
+.et-input { width: 60px; padding: 0.3rem 0.4rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; text-align: center; }
+.et-input:focus { outline: none; border-color: var(--primary); }
+.exam-total { padding: 0.5rem 0.8rem; text-align: right; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border); }
+.exam-start { background: var(--error); color: #fff; }
 @media (max-width: 640px) {
   .page-header { padding: 0.8rem 0; }
   .page-header h1 { font-size: 1.1rem; }

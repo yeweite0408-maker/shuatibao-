@@ -40,7 +40,9 @@
       "WebFetch(domain:blog.csdn.net)",
       "Bash(python3 -c ' *)",
       "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Remaining pending: {len\\(d\\)}'\\)\")",
-      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Total approved questions: {len\\(d\\)}'\\)\")"
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Total approved questions: {len\\(d\\)}'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Generated {len\\(d\\)} questions'\\);[\\(print\\(f'  [{q[\\\\\"type\\\\\"]}] {q[\\\\\"question\\\\\"][:30]}...'\\)\\) for q in d]\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'{len\\(d\\)} questions'\\);[print\\(f'  [{q[\\\\\"type\\\\\"]}] {q[\\\\\"question\\\\\"][:40]}'\\) for q in d]\")"
     ]
   }
 }

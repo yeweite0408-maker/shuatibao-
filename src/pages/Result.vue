@@ -32,6 +32,21 @@
         </div>
       </div>
 
+      <!-- 考试模式：显示得分 -->
+      <div class="exam-score" v-if="examScore !== null">
+        <div class="score-big">{{ examScore.correct }}/{{ examScore.total }}</div>
+        <p class="score-sub">得分</p>
+        <div class="exam-breakdown" v-if="examScore.breakdown.length">
+          <div class="eb-row" v-for="b in examScore.breakdown" :key="b.type">
+            <span class="eb-label">{{ typeLabel(b.type) }}</span>
+            <span class="eb-bar">
+              <span class="eb-fill" :style="{ width: (b.total > 0 ? b.correct/b.total*100 : 0) + '%' }"></span>
+            </span>
+            <span class="eb-num">{{ b.correct }}/{{ b.total }} ({{ b.earned }}分)</span>
+          </div>
+        </div>
+      </div>
+
       <div class="result-actions">
         <button class="btn btn-primary" @click="retry">再来一轮</button>
         <button class="btn btn-secondary" @click="router.push('/')">返回首页</button>
@@ -49,6 +64,9 @@ import api from '../api/index.js'
 const route = useRoute()
 const router = useRouter()
 const stats = ref(null)
+const examScore = ref(null)
+
+function typeLabel(t) { const m = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }; return m[t] || t }
 
 const scoreClass = computed(() => {
   if (!stats.value) return ''
@@ -66,6 +84,26 @@ onMounted(async () => {
     const data = res.data
     data.correctRate = data.total > 0 ? Math.round(data.correct / data.total * 100) : 0
     stats.value = data
+
+    // 计算考试得分
+    const config = JSON.parse(localStorage.getItem('examConfig') || 'null')
+    if (config && data.total > 0) {
+      const scoreMap = {}
+      config.types.forEach(t => { scoreMap[t.type] = { score: t.score, count: t.count } })
+      const breakdown = []
+      let totalScore = 0, earnedScore = 0
+      for (const t of config.types) {
+        const typeQuestions = data.wrongList.filter(w => w.type === t.type)
+        const typeTotal = t.count
+        const typeCorrect = typeTotal - typeQuestions.length
+        const earned = typeCorrect * t.score
+        const possible = t.count * t.score
+        breakdown.push({ type: t.type, total: typeTotal, correct: typeCorrect, earned, possible })
+        totalScore += possible
+        earnedScore += earned
+      }
+      examScore.value = { total: totalScore, correct: earnedScore, breakdown }
+    }
   } catch {}
 })
 
@@ -94,6 +132,15 @@ function retry() {
 .wrong-list { text-align: left; margin: 1.5rem 0; }
 .wrong-list h3 { font-size: 1rem; margin-bottom: 0.75rem; }
 .wrong-item { padding: 0.75rem; background: var(--bg); border-radius: 8px; margin-bottom: 0.5rem; }
+.exam-score { margin: 1rem 0; padding: 1rem; background: var(--bg); border-radius: 10px; }
+.score-big { font-size: 2rem; font-weight: 800; color: var(--primary); }
+.score-sub { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
+.exam-breakdown { display: flex; flex-direction: column; gap: 0.4rem; }
+.eb-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+.eb-label { width: 3rem; flex-shrink: 0; color: var(--text-secondary); }
+.eb-bar { flex: 1; height: 14px; background: #e8e8ec; border-radius: 7px; overflow: hidden; }
+.eb-fill { display: block; height: 100%; background: var(--primary); border-radius: 7px; transition: width 0.5s; }
+.eb-num { width: 5rem; text-align: right; flex-shrink: 0; font-weight: 500; }
 .wrong-q { font-weight: 500; margin-bottom: 0.3rem; font-size: 0.9rem; }
 .wrong-answer { font-size: 0.85rem; color: var(--error); margin-bottom: 0.2rem; }
 .wrong-explanation { font-size: 0.8rem; color: var(--text-secondary); }

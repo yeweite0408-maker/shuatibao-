@@ -136,27 +136,37 @@
             </select>
           </div>
           <div class="exam-field">
-            <label>题目数量</label>
-            <select v-model.number="examConfig.count" class="exam-select">
-              <option :value="5">5 题</option>
-              <option :value="10">10 题</option>
-              <option :value="20">20 题</option>
-              <option :value="0">全部</option>
-            </select>
-          </div>
-          <div class="exam-field">
             <label>时间限制</label>
             <select v-model.number="examConfig.timeLimit" class="exam-select">
               <option :value="5">5 分钟</option>
               <option :value="10">10 分钟</option>
               <option :value="15">15 分钟</option>
               <option :value="30">30 分钟</option>
+              <option :value="60">60 分钟</option>
               <option :value="0">不限时</option>
             </select>
           </div>
+          <div class="exam-type-grid">
+            <div class="exam-type-row" v-for="t in examConfig.types" :key="t.type">
+              <span class="et-label">{{ t.label }}</span>
+              <div class="et-inputs">
+                <label class="et-col">
+                  <span class="et-col-label">题数</span>
+                  <input type="number" v-model.number="t.count" min="0" max="50" class="et-input" />
+                </label>
+                <label class="et-col">
+                  <span class="et-col-label">分值/题</span>
+                  <input type="number" v-model.number="t.score" min="0" max="100" class="et-input" />
+                </label>
+              </div>
+            </div>
+            <div class="exam-total">
+              总分：<strong>{{ homeTotalScore }}</strong> 分 &nbsp;|&nbsp; 题数：<strong>{{ homeTotalCount }}</strong> 题
+            </div>
+          </div>
         </div>
         <div class="modal-actions">
-          <button class="btn exam-start" @click="startHomeExam">开始考试</button>
+          <button class="btn exam-start" @click="startHomeExam" :disabled="homeTotalCount === 0">开始考试</button>
           <button class="btn btn-secondary" @click="showExamModal = false">取消</button>
         </div>
       </div>
@@ -165,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/index.js'
 import { auth } from '../stores/auth.js'
@@ -180,7 +190,17 @@ const importJson = ref('')
 const importing = ref(false)
 const importResult = ref('')
 const showExamModal = ref(false)
-const examConfig = ref({ count: 10, timeLimit: 10, subject: '' })
+const examConfig = ref({
+  subject: '', timeLimit: 10,
+  types: [
+    { type: 'single_choice', label: '单选题', count: 5, score: 5 },
+    { type: 'multi_choice', label: '多选题', count: 3, score: 5 },
+    { type: 'true_false', label: '判断题', count: 2, score: 3 },
+    { type: 'fill_blank', label: '填空题', count: 0, score: 3 },
+  ]
+})
+const homeTotalScore = computed(() => examConfig.value.types.reduce((s, t) => s + t.count * t.score, 0))
+const homeTotalCount = computed(() => examConfig.value.types.reduce((s, t) => s + t.count, 0))
 
 function subjectEmoji(name) {
   const map = { 'ECharts': '📊', 'JavaScript': '🟨', 'Python': '🐍', '数学': '🔢', '英语': '🔤', 'HTML': '🌐' }
@@ -249,7 +269,14 @@ function quickQuiz() {
 async function startHomeExam() {
   const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
   localStorage.setItem('lastSessionId', sid)
-  const query = { count: examConfig.value.count || undefined, session_id: sid, exam: 1, timeLimit: examConfig.value.timeLimit || undefined }
+  localStorage.setItem('examConfig', JSON.stringify({
+    types: examConfig.value.types.map(t => ({ type: t.type, count: t.count, score: t.score })),
+    totalScore: homeTotalScore.value
+  }))
+  const query = {
+    session_id: sid, exam: 1, timeLimit: examConfig.value.timeLimit || undefined,
+    examTypes: examConfig.value.types.filter(t => t.count > 0).map(t => `${t.type}:${t.count}:${t.score}`).join(',')
+  }
   if (examConfig.value.subject) query.subject = examConfig.value.subject
   showExamModal.value = false
   router.push({ name: 'Quiz', query })
@@ -326,6 +353,16 @@ async function goWrong() {
 .exam-field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
 .exam-select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--card); }
 .exam-start { background: var(--error); color: #fff; flex: 1; }
+.exam-type-grid { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.exam-type-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.8rem; border-top: 1px solid var(--border); }
+.exam-type-row:first-child { border-top: none; }
+.et-label { font-weight: 500; font-size: 0.82rem; min-width: 3.5rem; }
+.et-inputs { display: flex; gap: 0.6rem; }
+.et-col { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.et-col-label { font-size: 0.65rem; color: var(--text-secondary); }
+.et-input { width: 55px; padding: 0.25rem 0.35rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; text-align: center; }
+.et-input:focus { outline: none; border-color: var(--primary); }
+.exam-total { padding: 0.5rem 0.8rem; text-align: right; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border); }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 400px; }

@@ -30,6 +30,9 @@ export default {
   toggleBookmark(data) { return api.post('/records/bookmark', data) },
   getWrongQuestions() { return api.get('/records/wrong') },
 
+  // Exam
+  generateExam(subject, config) { return api.post('/exam/generate', { subject, config }) },
+
   // Leaderboard
   getLeaderboard(type) { return api.get(`/leaderboard/${type}`) },
 

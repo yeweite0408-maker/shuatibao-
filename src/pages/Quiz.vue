@@ -158,6 +158,7 @@ const sessionId = ref(route.query.session_id || Date.now().toString(36))
 const examMode = ref(!!route.query.exam)
 const timeLimit = ref(parseInt(route.query.timeLimit) || 0)
 const timeRemaining = ref(timeLimit.value * 60)
+const examScoreMap = ref({})
 let timerInterval = null
 
 const typeLabel = computed(() => {
@@ -313,9 +314,19 @@ function finishQuiz() {
 onMounted(async () => {
   startTimer()
   try {
-    const count = parseInt(route.query.count)
-    const questionId = parseInt(route.query.question_id)
-    if (questionId) {
+    // 考试模式：使用试卷生成 API
+    if (route.query.exam && route.query.examTypes) {
+      const types = route.query.examTypes.split(',').map(s => {
+        const [type, count, score] = s.split(':')
+        examScoreMap.value[type] = parseInt(score) || 0
+        return { type, count: parseInt(count) || 0, score: parseInt(score) || 0 }
+      })
+      const res = await api.generateExam(route.query.subject, types)
+      questions.value = res.data || []
+    } else {
+      const count = parseInt(route.query.count)
+      const questionId = parseInt(route.query.question_id)
+      if (questionId) {
       const res = await api.getQuestion(questionId)
       if (res.data) questions.value = [res.data]
     } else if (route.query.wrong) {
@@ -334,7 +345,7 @@ onMounted(async () => {
       const res = await api.getRandomQuestions(999, route.query.subject)
       questions.value = res.data
     }
-    // 按题型过滤（考试模式可能指定题型）
+    }
     const types = route.query.types
     if (types && questions.value.length > 0) {
       const allowed = types.split(',')
