@@ -124,7 +124,6 @@
     <div class="modal-overlay" v-if="previewImg" @click="previewImg = null">
       <img :src="previewImg" class="preview-full" />
     </div>
-    </div>
   </div>
 </template>
 
