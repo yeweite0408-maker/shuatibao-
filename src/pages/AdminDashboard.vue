@@ -64,6 +64,24 @@
         </div>
       </div>
 
+      <!-- ====== 个人题库（管理员可见所有用户） ====== -->
+      <div v-show="tab === 'subjects'" style="margin-top:0.5rem;">
+        <h2 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">👤 用户个人题库</h2>
+        <div class="sa-card" v-if="personalSubjects.length">
+          <div class="sa-question" v-for="s in personalSubjects" :key="s.subject + s.uploaded_by">
+            <div class="sa-q-info">
+              <span class="a-subject">{{ s.subject }}</span>
+              <span class="a-user">by {{ s.creator_name }}</span>
+              <span class="a-text">{{ s.count }} 题</span>
+            </div>
+            <div class="sa-q-actions">
+              <button class="btn-approve btn-xs" @click="publishPersonal(s.subject, s.uploaded_by)">🌐 发布到公共</button>
+            </div>
+          </div>
+        </div>
+        <div v-else style="font-size:0.85rem;color:var(--text-secondary);padding:0.5rem 0;">暂无个人题库</div>
+      </div>
+
       <!-- ====== 待审核 ====== -->
       <div v-show="tab === 'pending'">
         <div v-if="pendingQuestions.length === 0" class="empty">暂无待审核题目</div>
@@ -203,6 +221,7 @@ const expandedSubject = ref(null)
 const searchText = ref('')
 
 const reports = ref([])
+const personalSubjects = ref([])
 const userDetail = ref(null)
 
 function rateColor(r) { if(r>=70) return 'var(--success)'; if(r>=40) return 'var(--warning)'; return 'var(--error)' }
@@ -238,14 +257,15 @@ async function loadSubjectQuestions(subject) {
 
 async function loadAll() {
   try {
-    const [ov, pq, us, fb, rp] = await Promise.all([
-      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports()
+    const [ov, pq, us, fb, rp, ps] = await Promise.all([
+      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports(), api.getPersonalSubjects()
     ])
     overview.value = ov.data
     pendingQuestions.value = pq.data
     users.value = us.data
     feedbackList.value = fb.data
     reports.value = rp.data
+    personalSubjects.value = ps.data
   } catch {}
 }
 
@@ -326,6 +346,12 @@ async function renameSubject(oldName) {
   allQuestionsMap.value[newName] = allQuestionsMap.value[oldName]
   delete allQuestionsMap.value[oldName]
   loadAll()
+}
+async function publishPersonal(subject, userId) {
+  if (!confirm(`确定将"${subject}"发布到公共题库吗？`)) return
+  await api.publishPersonalSubject(subject, userId)
+  const ps = await api.getPersonalSubjects()
+  personalSubjects.value = ps.data
 }
 async function deleteSubject(name) {
   if (!confirm(`确定删除题库"${name}"及其所有题目？此操作不可撤销！`)) return
@@ -422,6 +448,7 @@ async function reply(id) {
 .btn-del { padding: 0.25rem 0.5rem; border: 1px solid var(--error); border-radius: 6px; background: none; color: var(--error); font-size: 0.75rem; cursor: pointer; }
 .btn-del:disabled { opacity: 0.3; cursor: not-allowed; }
 .btn-view { padding:0.25rem 0.4rem; border:1px solid var(--primary); border-radius:6px; background:none; color:var(--primary); font-size:0.8rem; cursor:pointer; }
+.sa-card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
 .btn-view:hover { background:var(--primary); color:#fff; }
 
 .report-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }

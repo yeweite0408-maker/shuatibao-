@@ -44,6 +44,8 @@ export default {
   getPendingQuestions() { return api.get('/admin/questions/pending') },
   updateQuestionStatus(id, status) { return api.patch(`/admin/questions/${id}/status`, { status }) },
   getAdminOverview() { return api.get('/admin/stats/overview') },
+  getPersonalSubjects() { return api.get('/admin/subjects/personal') },
+  publishPersonalSubject(subject, userId) { return api.post('/admin/subjects/publish', { subject, userId }) },
   getUserDetailStats(id) { return api.get(`/admin/users/${id}/stats`) },
   getReports() { return api.get('/reports') },
   submitReport(data) { return api.post('/reports', data) },

@@ -102,9 +102,10 @@ router.post('/batch', optionalAuth, (req, res) => {
   const insert = transaction((items) => {
     for (const item of items) {
       if (!item.type || !item.question || !item.answer) continue
+      const scope = isAdmin ? (req.body.scope || 'public') : 'private'
       run(
         'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [item.subject || '', item.type, item.question, item.options ? JSON.stringify(item.options) : null, item.answer, item.explanation || '', status, req.user?.id || null, req.body.scope || 'public']
+        [item.subject || '', item.type, item.question, item.options ? JSON.stringify(item.options) : null, item.answer, item.explanation || '', status, req.user?.id || null, scope]
       )
       count++
     }
@@ -120,9 +121,10 @@ router.post('/', optionalAuth, (req, res) => {
   }
   const isAdmin = req.user?.role === 'admin'
   const status = isAdmin ? 'approved' : 'pending'
+  const scope = isAdmin ? (req.body.scope || 'public') : 'private'
   const result = run(
     'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', status, req.user?.id || null, req.body.scope || 'public']
+    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', status, req.user?.id || null, scope]
   )
   res.status(201).json({ id: result.lastInsertRowid, status })
 })

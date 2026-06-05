@@ -51,7 +51,8 @@
               <span class="card-count">{{ s.count }} 道题</span>
             </div>
             <div class="card-personal-actions" @click.stop>
-              <button class="btn-publish" @click="publishSubject(s.subject)" title="发布到公共题库">🌐 发布</button>
+              <button class="btn-publish" @click="publishSubject(s.subject)" title="申请发布到公共题库" v-if="auth.user?.role === 'admin'">🌐 发布</button>
+              <span v-else class="private-label">仅自己可见</span>
             </div>
           </div>
         </div>
@@ -86,7 +87,7 @@
         <p class="modal-hint">输入新题库名称</p>
         <input v-model="newSubjectName" class="modal-input" placeholder="如：JavaScript、Python、数学" @keyup.enter="createSubject" />
           <div class="dialog-scope">
-          <label class="scope-label">
+          <label class="scope-label" v-if="auth.user?.role === 'admin'">
             <input type="radio" v-model="newSubjectScope" value="public" /> 🌐 公共题库（所有人可见）
           </label>
           <label class="scope-label">
@@ -193,7 +194,7 @@ const lastStats = ref(null)
 const showCreateDialog = ref(false)
 const showImportDialog = ref(false)
 const newSubjectName = ref('')
-const newSubjectScope = ref('public')
+const newSubjectScope = ref(auth.user?.role === 'admin' ? 'public' : 'private')
 const importJson = ref('')
 const importing = ref(false)
 const importResult = ref('')
@@ -337,6 +338,7 @@ async function publishSubject(name) {
 .card-personal-actions { flex-shrink: 0; }
 .btn-publish { font-size: 0.7rem; padding: 0.25rem 0.5rem; border: 1px solid var(--primary); border-radius: 6px; background: none; color: var(--primary); cursor: pointer; white-space: nowrap; }
 .btn-publish:hover { background: var(--primary); color: #fff; }
+.private-label { font-size:0.7rem; color:var(--text-secondary); }
 
 .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
 

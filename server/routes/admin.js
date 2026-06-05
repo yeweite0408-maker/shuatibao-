@@ -66,6 +66,29 @@ router.get('/questions/all', (req, res) => {
   res.json(rows)
 })
 
+// 获取所有个人题库（含上传者）
+router.get('/subjects/personal', (req, res) => {
+  const rows = all(`
+    SELECT q.subject, COUNT(*) as count, q.uploaded_by, u.username as creator_name
+    FROM questions q LEFT JOIN users u ON q.uploaded_by = u.id
+    WHERE q.scope = 'private' AND q.uploaded_by IS NOT NULL
+    GROUP BY q.subject, q.uploaded_by ORDER BY q.subject
+  `)
+  res.json(rows)
+})
+
+// 管理员发布个人题库到公共
+router.post('/subjects/publish', (req, res) => {
+  const { subject, userId } = req.body
+  if (!subject) return res.status(400).json({ error: '请指定题库' })
+  if (userId) {
+    run("UPDATE questions SET scope = 'public' WHERE subject = ? AND uploaded_by = ?", [subject, userId])
+  } else {
+    run("UPDATE questions SET scope = 'public' WHERE subject = ?", [subject])
+  }
+  res.json({ success: true })
+})
+
 // 题库管理（按科目）
 router.put('/subjects/:name', (req, res) => {
   const newName = req.body.name
