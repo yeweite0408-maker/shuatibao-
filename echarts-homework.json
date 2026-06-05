@@ -1,0 +1,153 @@
+[
+  {
+    "subject": "ECharts",
+    "type": "fill_blank",
+    "question": "数据可视化工具的基本特性有______、易操作性和展现形式多样性。",
+    "answer": "交互性",
+    "explanation": "数据可视化工具的三个基本特性：交互性、易操作性和展现形式多样性。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "fill_blank",
+    "question": "Visual Studio Code 编辑器的默认语言是______。",
+    "answer": "HTML",
+    "explanation": "VS Code 编辑器的默认语言是 HTML。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "fill_blank",
+    "question": "ECharts 的标题组件包括______和副标题组件。",
+    "answer": "主标题",
+    "explanation": "ECharts 的标题组件包括主标题（title.text）和副标题（title.subtext）组件。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "fill_blank",
+    "question": "ECharts 5 的新特性主要有动态叙事、______、交互能力、开发体验和______5个方面。",
+    "answer": "可视化叙事,可访问性",
+    "explanation": "ECharts 5 的五大新特性：动态叙事、可视化叙事、交互能力、开发体验和可访问性。"
+  },
+
+  {
+    "subject": "ECharts",
+    "type": "true_false",
+    "question": "ECharts 是开源免费的，使用 ECharts 不需要缴纳任何费用。",
+    "options": ["A. 正确", "B. 错误"],
+    "answer": "A",
+    "explanation": "ECharts 是开源免费的，使用 ECharts 不需要缴纳任何费用。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "true_false",
+    "question": "ECharts 提供了多种图表类型，但是不支持跨平台使用。",
+    "options": ["A. 正确", "B. 错误"],
+    "answer": "B",
+    "explanation": "ECharts 支持跨平台使用，可在 PC 和移动设备上运行。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "true_false",
+    "question": "ECharts 支持流数据的动态渲染。",
+    "options": ["A. 正确", "B. 错误"],
+    "answer": "A",
+    "explanation": "ECharts 通过 setInterval 等方式可以实现流数据的动态渲染。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "true_false",
+    "question": "ECharts 提供了 Python 开发者使用的数据可视化工具 pyecharts。",
+    "options": ["A. 正确", "B. 错误"],
+    "answer": "A",
+    "explanation": "pyecharts 是 ECharts 的 Python 接口，方便 Python 开发者使用。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "true_false",
+    "question": "ECharts 5 新增鼠标指针移入目标元素时淡出其他非相关元素的效果，从而达到聚焦目标数据的目的。",
+    "options": ["A. 正确", "B. 错误"],
+    "answer": "A",
+    "explanation": "ECharts 5 新增了 emphasis 和 blur 效果，移入目标元素时淡出非相关元素。"
+  },
+
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，ECharts属于的技术类型为（ ）。",
+    "options": ["A. 数据可视化库", "B. 人工智能算法", "C. 操作系统", "D. 前端框架"],
+    "answer": "A",
+    "explanation": "ECharts 是一个数据可视化库，用于将数据以图表形式展示。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，不属于数据可视化工具的是（ ）。",
+    "options": ["A. ECharts", "B. D3", "C. Vue.js", "D. AntV"],
+    "answer": "C",
+    "explanation": "Vue.js 是前端框架，不属于数据可视化工具。ECharts、D3、AntV 都是数据可视化库。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选择中，ECharts基于的技术是（ ）。",
+    "options": ["A. Java", "B. JavaScript", "C. jQuery", "D. Ajax"],
+    "answer": "B",
+    "explanation": "ECharts 是基于 JavaScript 的数据可视化库，使用 Canvas 渲染图表。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，关于xAxis对象常用属性的说法正确的是（ ）。",
+    "options": ["A. type属性用于设置x轴的类型，默认值为value", "B. show属性用于设置是否显示x轴", "C. name属性用于设置x轴名称的显示位置", "D. boundaryGap属性用于设置x轴的位置"],
+    "answer": "B",
+    "explanation": "show属性用于设置是否显示x轴。A错误：type默认值为category；C错误：name属性用于设置名称，nameLocation设置显示位置；D错误：boundaryGap用于设置留白策略。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，关于系列说法错误的是（ ）。",
+    "options": ["A. type属性值为line时，表示图表类型为折线图", "B. name属性用于设置系列名称", "C. step属性用于设置图表是否为阶梯折线图", "D. 对于每种可视化图表，系列的属性均相同"],
+    "answer": "D",
+    "explanation": "不同图表类型的系列属性不同，如折线图有step属性，饼图则有roseType属性。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，关于grid的说法错误的是（ ）。",
+    "options": ["A. grid属性用于设置直角坐标系内绘图网格的位置", "B. borderColor属性用于设置边框颜色", "C. backgroundColor属性用于设置网格组件的背景色，默认值为#ccc", "D. borderWidth属性用于设置边框线宽"],
+    "answer": "C",
+    "explanation": "grid.backgroundColor 的默认值为 transparent（透明），而非 #ccc。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，关于tooltip对象的说法错误的是（ ）。",
+    "options": ["A. show属性用于设置是否显示提示框组件", "B. 当trigger属性值为axis时，表示可以在折线图的坐标轴上触发提示框", "C. axisPointer对象的type属性用于设置指示器类型", "D. 在grid中不能添加tooltip对象的相关属性"],
+    "answer": "D",
+    "explanation": "tooltip 可以添加到 grid 中，在直角坐标系中配合 axisPointer 使用。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "single_choice",
+    "question": "下列选项中，关于工具栏组件的说法正确的是（ ）。",
+    "options": ["A. 工具栏组件用于设置图表的工具栏，通过toolbox属性来实现", "B. toolbox对象的showTitle属性的默认值为false，即鼠标指针滑过时不显示每个工具icon的标题", "C. toolbox对象的itemGap属性用于设置工具栏icon的大小", "D. toolbox对象的feature属性用于设置各工具配置项，其值为数组类型"],
+    "answer": "A",
+    "explanation": "B错误：showTitle默认值为true；C错误：itemGap设置图标间距而非大小；D错误：feature属性值为对象类型。"
+  },
+
+  {
+    "subject": "ECharts",
+    "type": "multi_choice",
+    "question": "下列选项中，属于ECharts特性的有（ ）。（多选）",
+    "options": ["A. 支持多种数据格式", "B. 支持跨平台", "C. 支持多种图表类型", "D. 支持多语言"],
+    "answer": "A,B,C",
+    "explanation": "ECharts支持多种数据格式、跨平台运行、多种图表类型。多语言支持不属于其核心特性。"
+  },
+  {
+    "subject": "ECharts",
+    "type": "multi_choice",
+    "question": "下列选项中，属于ECharts获取方式的是（ ）。（多选）",
+    "options": ["A. 从CDN获取", "B. 从npm获取", "C. 从GitHub获取", "D. 通过在线定制的方式获取"],
+    "answer": "A,B,C,D",
+    "explanation": "ECharts 可以通过 CDN、npm、GitHub 下载以及官网在线定制等多种方式获取。"
+  }
+]

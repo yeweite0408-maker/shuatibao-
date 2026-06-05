@@ -45,6 +45,10 @@
           <span class="action-icon">❌</span>
           <span>错题集</span>
         </div>
+        <div class="action-card" @click="showExamModal = true">
+          <span class="action-icon">📝</span>
+          <span>模拟考试</span>
+        </div>
         <div class="action-card" @click="$router.push('/leaderboard')">
           <span class="action-icon">🏆</span>
           <span>排行榜</span>
@@ -118,6 +122,45 @@
         <div class="import-result" v-if="importResult">{{ importResult }}</div>
       </div>
     </div>
+
+    <!-- 模拟考试设置 -->
+    <div class="modal-overlay" v-if="showExamModal" @click.self="showExamModal = false">
+      <div class="modal">
+        <h3>📝 模拟考试</h3>
+        <div class="exam-form">
+          <div class="exam-field">
+            <label>科目</label>
+            <select v-model="examConfig.subject" class="exam-select">
+              <option value="">全部科目</option>
+              <option v-for="s in subjects" :key="s.subject" :value="s.subject">{{ s.subject }}</option>
+            </select>
+          </div>
+          <div class="exam-field">
+            <label>题目数量</label>
+            <select v-model.number="examConfig.count" class="exam-select">
+              <option :value="5">5 题</option>
+              <option :value="10">10 题</option>
+              <option :value="20">20 题</option>
+              <option :value="0">全部</option>
+            </select>
+          </div>
+          <div class="exam-field">
+            <label>时间限制</label>
+            <select v-model.number="examConfig.timeLimit" class="exam-select">
+              <option :value="5">5 分钟</option>
+              <option :value="10">10 分钟</option>
+              <option :value="15">15 分钟</option>
+              <option :value="30">30 分钟</option>
+              <option :value="0">不限时</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn exam-start" @click="startHomeExam">开始考试</button>
+          <button class="btn btn-secondary" @click="showExamModal = false">取消</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -136,6 +179,8 @@ const newSubjectName = ref('')
 const importJson = ref('')
 const importing = ref(false)
 const importResult = ref('')
+const showExamModal = ref(false)
+const examConfig = ref({ count: 10, timeLimit: 10, subject: '' })
 
 function subjectEmoji(name) {
   const map = { 'ECharts': '📊', 'JavaScript': '🟨', 'Python': '🐍', '数学': '🔢', '英语': '🔤', 'HTML': '🌐' }
@@ -199,6 +244,15 @@ function quickQuiz() {
   const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
   localStorage.setItem('lastSessionId', sessionId)
   router.push({ name: 'Quiz', query: { count: 10, session_id: sessionId } })
+}
+
+async function startHomeExam() {
+  const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+  localStorage.setItem('lastSessionId', sid)
+  const query = { count: examConfig.value.count || undefined, session_id: sid, exam: 1, timeLimit: examConfig.value.timeLimit || undefined }
+  if (examConfig.value.subject) query.subject = examConfig.value.subject
+  showExamModal.value = false
+  router.push({ name: 'Quiz', query })
 }
 
 async function goWrong() {
@@ -268,6 +322,10 @@ async function goWrong() {
 .stat-val.correct { color: var(--success); }
 .stat-val.wrong { color: var(--error); }
 .stat-val.rate { color: var(--primary); }
+.exam-form { display: flex; flex-direction: column; gap: 0.8rem; }
+.exam-field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
+.exam-select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--card); }
+.exam-start { background: var(--error); color: #fff; flex: 1; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 400px; }

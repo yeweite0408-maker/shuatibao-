@@ -2,8 +2,12 @@
   <div class="quiz-layout">
     <aside class="sidebar">
       <div class="sidebar-header">
+        <div class="exam-timer" v-if="examMode" :class="{ urgent: timeRemaining <= 60 }">
+          <span class="timer-icon">⏱️</span>
+          <span class="timer-text">{{ formatTime(timeRemaining) }}</span>
+        </div>
         <span class="progress-text">{{ answeredCount }}/{{ questions.length }}</span>
-        <button class="btn btn-secondary btn-sm" @click="finishQuiz">完成</button>
+        <button class="btn btn-secondary btn-sm" @click="examMode ? confirmFinishExam() : finishQuiz()">{{ examMode ? '交卷' : '完成' }}</button>
       </div>
       <div class="question-numbers">
         <button
@@ -151,6 +155,10 @@ const bookmarkedSet = ref(new Set())
 const questionStats = ref(null)
 const autoAdvancing = ref(false)
 const sessionId = ref(route.query.session_id || Date.now().toString(36))
+const examMode = ref(!!route.query.exam)
+const timeLimit = ref(parseInt(route.query.timeLimit) || 0)
+const timeRemaining = ref(timeLimit.value * 60)
+let timerInterval = null
 
 const typeLabel = computed(() => {
   const map = { single_choice: '单选题', multi_choice: '多选题', true_false: '判断题', fill_blank: '填空题' }
@@ -267,11 +275,43 @@ function resetAnswerState() {
   autoAdvancing.value = false
 }
 
+function formatTime(sec) {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+function startTimer() {
+  if (!examMode.value || timeLimit.value <= 0) return
+  timerInterval = setInterval(() => {
+    timeRemaining.value--
+    if (timeRemaining.value <= 0) {
+      clearInterval(timerInterval)
+      autoSubmitExam()
+    }
+  }, 1000)
+}
+
+function autoSubmitExam() {
+  alert('⏰ 考试时间到！自动交卷。')
+  router.push({ name: 'Result', query: { session_id: sessionId.value } })
+}
+
+function confirmFinishExam() {
+  const unanswered = questions.value.length - Object.keys(answers.value).length
+  const msg = unanswered > 0 ? `还有 ${unanswered} 道题未作答，确定交卷吗？` : '确定交卷吗？'
+  if (confirm(msg)) {
+    clearInterval(timerInterval)
+    finishQuiz()
+  }
+}
+
 function finishQuiz() {
   router.push({ name: 'Result', query: { session_id: sessionId.value } })
 }
 
 onMounted(async () => {
+  startTimer()
   try {
     const count = parseInt(route.query.count)
     const questionId = parseInt(route.query.question_id)
@@ -294,10 +334,20 @@ onMounted(async () => {
       const res = await api.getRandomQuestions(999, route.query.subject)
       questions.value = res.data
     }
+    // 按题型过滤（考试模式可能指定题型）
+    const types = route.query.types
+    if (types && questions.value.length > 0) {
+      const allowed = types.split(',')
+      questions.value = questions.value.filter(q => allowed.includes(q.type))
+    }
   } catch {
     questions.value = []
   }
 })
+
+// 组件卸载时清除计时器
+import { onUnmounted } from 'vue'
+onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 </script>
 
 <style scoped>
@@ -365,6 +415,12 @@ onMounted(async () => {
 /* 动画 */
 .fade-enter-active, .fade-leave-active { transition: all 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* 考试计时器 */
+.exam-timer { display: flex; align-items: center; gap: 0.3rem; font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+.exam-timer.urgent { color: var(--error); animation: pulse 1s ease-in-out infinite; }
+.timer-icon { font-size: 1rem; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 /* 手机端适配 */
 @media (max-width: 640px) {

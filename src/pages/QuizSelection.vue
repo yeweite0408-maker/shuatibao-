@@ -12,6 +12,7 @@
       <div class="quiz-actions">
         <button class="btn-quiz sequential" @click="startSequential">📖 顺序练习</button>
         <button class="btn-quiz random" @click="startRandom">🎲 随机练习</button>
+        <button class="btn-quiz exam" @click="showExamSetup = true">📝 模拟考试</button>
         <button class="btn-quiz import-btn" @click="showImport = true">📥 批量导入</button>
       </div>
 
@@ -46,9 +47,14 @@
     <div class="modal-overlay" v-if="showImport" @click.self="showImport = false">
       <div class="modal">
         <h3>批量导入 — {{ subject }}</h3>
-        <p class="modal-hint">粘贴 JSON 格式的题目数组</p>
-        <div class="modal-example">
-          <pre>[
+        <div class="import-tabs">
+          <button class="import-tab" :class="{ active: importTab === 'paste' }" @click="importTab='paste'">📋 粘贴</button>
+          <button class="import-tab" :class="{ active: importTab === 'file' }" @click="importTab='file'">📁 上传文件</button>
+        </div>
+
+        <div v-if="importTab === 'paste'">
+          <div class="modal-example">
+            <pre>[
   {
     "type": "single_choice",
     "question": "题目",
@@ -56,13 +62,65 @@
     "answer": "A"
   }
 ]</pre>
+          </div>
+          <textarea v-model="importJson" class="import-textarea" rows="6" placeholder='请粘贴 JSON...'></textarea>
         </div>
-        <textarea v-model="importJson" class="import-textarea" rows="8" placeholder='请粘贴 JSON...'></textarea>
+
+        <div v-else class="file-upload-area">
+          <input ref="fileInput" type="file" accept=".json" hidden @change="onFileSelected" />
+          <div class="file-dropzone" @click="fileInput.click()" @dragover.prevent @drop.prevent="onFileDrop">
+            <span class="file-icon">📂</span>
+            <span>点击选择 JSON 文件，或拖拽到此处</span>
+          </div>
+          <div class="file-name" v-if="selectedFile">{{ selectedFile.name }}</div>
+        </div>
+
         <div class="modal-actions">
           <button class="btn btn-primary" @click="batchImport" :disabled="importing">{{ importing ? '导入中...' : '确认导入' }}</button>
           <button class="btn btn-secondary" @click="showImport = false">取消</button>
         </div>
         <div class="import-result" v-if="importResult">{{ importResult }}</div>
+      </div>
+    </div>
+
+    <!-- 模拟考试设置 -->
+    <div class="modal-overlay" v-if="showExamSetup" @click.self="showExamSetup = false">
+      <div class="modal">
+        <h3>📝 模拟考试 — {{ subject }}</h3>
+        <p class="modal-hint">设置考试参数</p>
+        <div class="exam-form">
+          <div class="exam-field">
+            <label>题目数量</label>
+            <select v-model.number="examConfig.count" class="exam-select">
+              <option :value="5">5 题</option>
+              <option :value="10">10 题</option>
+              <option :value="20">20 题</option>
+              <option :value="0">全部 ({{ questions.length }} 题)</option>
+            </select>
+          </div>
+          <div class="exam-field">
+            <label>时间限制</label>
+            <select v-model.number="examConfig.timeLimit" class="exam-select">
+              <option :value="5">5 分钟</option>
+              <option :value="10">10 分钟</option>
+              <option :value="15">15 分钟</option>
+              <option :value="30">30 分钟</option>
+              <option :value="0">不限时</option>
+            </select>
+          </div>
+          <div class="exam-field">
+            <label>题目类型</label>
+            <div class="exam-types">
+              <label v-for="t in questionTypes" :key="t.value" class="exam-type-check">
+                <input type="checkbox" v-model="t.checked" /> {{ t.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" @click="startExam">开始考试</button>
+          <button class="btn btn-secondary" @click="showExamSetup = false">取消</button>
+        </div>
       </div>
     </div>
   </div>
@@ -81,6 +139,18 @@ const showImport = ref(false)
 const importJson = ref('')
 const importing = ref(false)
 const importResult = ref('')
+const importTab = ref('paste')
+const fileInput = ref(null)
+const selectedFile = ref(null)
+
+const showExamSetup = ref(false)
+const examConfig = ref({ count: 10, timeLimit: 10 })
+const questionTypes = ref([
+  { value: 'single_choice', label: '单选题', checked: true },
+  { value: 'multi_choice', label: '多选题', checked: true },
+  { value: 'true_false', label: '判断题', checked: true },
+  { value: 'fill_blank', label: '填空题', checked: true },
+])
 
 function typeLabel(type) {
   const map = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }
@@ -109,6 +179,41 @@ function startRandom() {
   const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
   localStorage.setItem('lastSessionId', sid)
   router.push({ name: 'Quiz', query: { count: 10, session_id: sid, subject: subject.value, random: 1 } })
+}
+
+function onFileSelected(e) {
+  selectedFile.value = e.target.files[0] || null
+  if (selectedFile.value) {
+    const reader = new FileReader()
+    reader.onload = (ev) => importJson.value = ev.target.result
+    reader.readAsText(selectedFile.value)
+  }
+}
+function onFileDrop(e) {
+  selectedFile.value = e.dataTransfer.files[0] || null
+  if (selectedFile.value) {
+    const reader = new FileReader()
+    reader.onload = (ev) => importJson.value = ev.target.result
+    reader.readAsText(selectedFile.value)
+  }
+}
+
+function startExam() {
+  const types = questionTypes.value.filter(t => t.checked).map(t => t.value)
+  const sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+  localStorage.setItem('lastSessionId', sid)
+  showExamSetup.value = false
+  router.push({
+    name: 'Quiz',
+    query: {
+      count: examConfig.value.count || undefined,
+      session_id: sid,
+      subject: subject.value,
+      exam: 1,
+      timeLimit: examConfig.value.timeLimit || undefined,
+      types: types.length < 4 ? types.join(',') : undefined
+    }
+  })
 }
 
 function openQuestion(id) {
@@ -152,6 +257,7 @@ async function batchImport() {
 .btn-quiz.sequential { background: var(--primary); color: #fff; }
 .btn-quiz.random { background: #34c759; color: #fff; }
 .btn-quiz.import-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-quiz.exam { background: var(--error); color: #fff; }
 .btn-quiz:hover { opacity: 0.9; transform: translateY(-1px); }
 
 .question-table { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
@@ -171,6 +277,19 @@ async function batchImport() {
 .stats-info.no-data { color: var(--text-secondary); font-weight: 400; }
 .empty { text-align: center; padding: 3rem; color: var(--text-secondary); }
 
+.import-tabs { display: flex; gap: 0; margin-bottom: 0.8rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.import-tab { flex: 1; padding: 0.4rem; border: none; background: var(--card); cursor: pointer; font-size: 0.82rem; }
+.import-tab.active { background: var(--primary); color: #fff; }
+.file-upload-area { margin-bottom: 0.8rem; }
+.file-dropzone { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem; border: 2px dashed var(--border); border-radius: 10px; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.file-dropzone:hover { border-color: var(--primary); color: var(--primary); }
+.file-icon { font-size: 2rem; }
+.file-name { font-size: 0.82rem; color: var(--primary); margin-top: 0.3rem; text-align: center; }
+.exam-form { display: flex; flex-direction: column; gap: 0.8rem; }
+.exam-field label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
+.exam-select { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--card); }
+.exam-types { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.exam-type-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; }
 @media (max-width: 640px) {
   .page-header { padding: 0.8rem 0; }
   .page-header h1 { font-size: 1.1rem; }

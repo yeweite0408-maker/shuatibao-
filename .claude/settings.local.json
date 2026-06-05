@@ -33,7 +33,14 @@
       "Bash(git credential *)",
       "Bash(curl.exe *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total questions: {len\\(d\\)}'\\); [print\\(f'  [{q[\\\\\"status\\\\\"]}] {q[\\\\\"question\\\\\"][:30]}...'\\) for q in d[:3]]\")",
-      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Questions: {len\\(d\\)}'\\)\")"
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Questions: {len\\(d\\)}'\\)\")",
+      "WebSearch",
+      "WebFetch(domain:resource.ityxb.com)",
+      "WebFetch(domain:max.book118.com)",
+      "WebFetch(domain:blog.csdn.net)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Remaining pending: {len\\(d\\)}'\\)\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Total approved questions: {len\\(d\\)}'\\)\")"
     ]
   }
 }
