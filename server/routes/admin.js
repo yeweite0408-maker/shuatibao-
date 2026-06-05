@@ -66,6 +66,22 @@ router.get('/questions/all', (req, res) => {
   res.json(rows)
 })
 
+// 题库管理（按科目）
+router.put('/subjects/:name', (req, res) => {
+  const newName = req.body.name
+  if (!newName || !newName.trim()) return res.status(400).json({ error: '请输入新名称' })
+  // URL 传过来的中文可能被编码
+  const oldName = decodeURIComponent(req.params.name)
+  run('UPDATE questions SET subject = ? WHERE subject = ?', [newName.trim(), oldName])
+  res.json({ success: true })
+})
+
+router.delete('/subjects/:name', (req, res) => {
+  const name = decodeURIComponent(req.params.name)
+  run('DELETE FROM questions WHERE subject = ?', [name])
+  res.json({ success: true })
+})
+
 // 全站统计
 router.get('/stats/overview', (req, res) => {
   const totalUsers = get('SELECT COUNT(*) as count FROM users')

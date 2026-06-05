@@ -45,4 +45,6 @@ export default {
   updateQuestionStatus(id, status) { return api.patch(`/admin/questions/${id}/status`, { status }) },
   getAdminOverview() { return api.get('/admin/stats/overview') },
   getAllQuestions(params) { return api.get('/admin/questions/all', { params }) },
+  renameSubject(oldName, newName) { return api.put(`/admin/subjects/${encodeURIComponent(oldName)}`, { name: newName }) },
+  deleteSubject(name) { return api.delete(`/admin/subjects/${encodeURIComponent(name)}`) },
 }
