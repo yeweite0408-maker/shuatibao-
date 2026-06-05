@@ -1,0 +1,132 @@
+import { Router } from 'express'
+import { all, get, run, transaction } from '../db.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
+
+const router = Router()
+
+const parseRow = r => ({ ...r, options: r.options ? JSON.parse(r.options) : null })
+
+// 仅返回已审核题目（普通用户），管理员可看全部
+router.get('/', (req, res) => {
+  const { type, subject, status } = req.query
+  let sql = 'SELECT q.*, u.username as uploader_name FROM questions q LEFT JOIN users u ON q.uploaded_by = u.id'
+  const conditions = []
+  const params = []
+  if (type) { conditions.push('q.type = ?'); params.push(type) }
+  if (subject) { conditions.push('q.subject = ?'); params.push(subject) }
+  if (status) { conditions.push('q.status = ?'); params.push(status) }
+  else { conditions.push("q.status = 'approved'") }
+  sql += ' WHERE ' + conditions.join(' AND ')
+  sql += ' ORDER BY q.created_at DESC'
+  res.json(all(sql, params).map(parseRow))
+})
+
+// 获取所有科目及题目数
+router.get('/subjects', (req, res) => {
+  const rows = all("SELECT subject, COUNT(*) as count FROM questions WHERE status = 'approved' GROUP BY subject ORDER BY subject")
+  res.json(rows)
+})
+
+// 按科目获取题目统计（含全局答题情况）
+router.get('/subject/:subject/stats', (req, res) => {
+  const subject = req.params.subject
+  const questions = all(
+    "SELECT q.id, q.type, q.question, q.options, q.answer, COUNT(r.id) as total_attempts, SUM(CASE WHEN r.is_correct = 1 THEN 1 ELSE 0 END) as correct_count FROM questions q LEFT JOIN records r ON q.id = r.question_id WHERE q.subject = ? AND q.status = 'approved' GROUP BY q.id ORDER BY q.created_at ASC",
+    [subject]
+  )
+  res.json(questions.map(q => ({
+    id: q.id,
+    type: q.type,
+    question: q.question,
+    options: q.options ? JSON.parse(q.options) : null,
+    answer: q.answer,
+    totalAttempts: q.total_attempts,
+    correctCount: q.correct_count || 0,
+    correctRate: q.total_attempts > 0 ? Math.round(q.correct_count / q.total_attempts * 100) : null
+  })))
+})
+
+router.get('/random', (req, res) => {
+  const count = parseInt(req.query.count) || 10
+  const { subject } = req.query
+  let sql = "SELECT * FROM questions WHERE status = 'approved'"
+  const params = []
+  if (subject) { sql += ' AND subject = ?'; params.push(subject) }
+  sql += ' ORDER BY RANDOM() LIMIT ?'
+  params.push(count)
+  res.json(all(sql, params).map(parseRow))
+})
+
+// 批量导入（管理员直接通过，普通用户需审核）
+router.post('/batch', optionalAuth, (req, res) => {
+  const { questions } = req.body
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ error: '请传入 questions 数组' })
+  }
+  const isAdmin = req.user?.role === 'admin'
+  const status = isAdmin ? 'approved' : 'pending'
+  let count = 0
+  const insert = transaction((items) => {
+    for (const item of items) {
+      if (!item.type || !item.question || !item.answer) continue
+      run(
+        'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [item.subject || '', item.type, item.question, item.options ? JSON.stringify(item.options) : null, item.answer, item.explanation || '', status, req.user?.id || null]
+      )
+      count++
+    }
+  })
+  insert(questions)
+  res.json({ success: true, imported: count, status })
+})
+
+router.post('/', optionalAuth, (req, res) => {
+  const { subject, type, question, options, answer, explanation } = req.body
+  if (!type || !question || !answer) {
+    return res.status(400).json({ error: 'type, question, answer 为必填' })
+  }
+  const isAdmin = req.user?.role === 'admin'
+  const status = isAdmin ? 'approved' : 'pending'
+  const result = run(
+    'INSERT INTO questions (subject, type, question, options, answer, explanation, status, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', status, req.user?.id || null]
+  )
+  res.status(201).json({ id: result.lastInsertRowid, status })
+})
+
+router.get('/:id/stats', (req, res) => {
+  const id = req.params.id
+  const total = get('SELECT COUNT(*) as count FROM records WHERE question_id = ?', [id])
+  const correct = get('SELECT COUNT(*) as count FROM records WHERE question_id = ? AND is_correct = 1', [id])
+  const answers = all('SELECT user_answer, COUNT(*) as cnt FROM records WHERE question_id = ? AND user_answer IS NOT NULL GROUP BY user_answer ORDER BY cnt DESC', [id])
+  res.json({
+    total: total.count,
+    correct: correct.count,
+    correctRate: total.count > 0 ? Math.round(correct.count / total.count * 100) : 0,
+    distribution: answers.map(a => ({ answer: a.user_answer, count: a.cnt }))
+  })
+})
+
+router.get('/:id', (req, res) => {
+  const row = get('SELECT q.*, u.username as uploader_name FROM questions q LEFT JOIN users u ON q.uploaded_by = u.id WHERE q.id = ?', [req.params.id])
+  if (!row) return res.status(404).json({ error: '题目不存在' })
+  res.json(parseRow(row))
+})
+
+router.put('/:id', (req, res) => {
+  const { subject, type, question, options, answer, explanation } = req.body
+  const result = run(
+    'UPDATE questions SET subject=?, type=?, question=?, options=?, answer=?, explanation=? WHERE id=?',
+    [subject || '', type, question, options ? JSON.stringify(options) : null, answer, explanation || '', req.params.id]
+  )
+  if (result.changes === 0) return res.status(404).json({ error: '题目不存在' })
+  res.json({ success: true })
+})
+
+router.delete('/:id', (req, res) => {
+  const result = run('DELETE FROM questions WHERE id = ?', [req.params.id])
+  if (result.changes === 0) return res.status(404).json({ error: '题目不存在' })
+  res.json({ success: true })
+})
+
+export default router
