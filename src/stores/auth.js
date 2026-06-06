@@ -5,7 +5,18 @@ const tokenKey = 'shuati_token'
 const userKey = 'shuati_user'
 
 const savedToken = localStorage.getItem(tokenKey)
-const savedUser = JSON.parse(localStorage.getItem(userKey) || 'null')
+let savedUser = JSON.parse(localStorage.getItem(userKey) || 'null')
+
+// 修复旧数据缺少 role 字段的问题
+if (savedUser && !savedUser.role && savedToken) {
+  const parts = savedToken.split('.')
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(atob(parts[1]))
+      if (payload.role) savedUser.role = payload.role
+    } catch {}
+  }
+}
 
 export const auth = reactive({
   token: savedToken,
@@ -18,7 +29,6 @@ export function setAuth(token, user) {
   auth.user = user
   localStorage.setItem(tokenKey, token)
   localStorage.setItem(userKey, JSON.stringify(user))
-  // 设置 axios 默认请求头
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
@@ -30,7 +40,6 @@ export function clearAuth() {
   delete axios.defaults.headers.common['Authorization']
 }
 
-// 从后端同步用户信息（保证 role 等最新数据）
 export async function syncUser() {
   if (!auth.token) return
   try {
@@ -42,7 +51,6 @@ export async function syncUser() {
   } catch { clearAuth() }
 }
 
-// 初始化时如果已有 token，设置请求头
 if (auth.token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${auth.token}`
 }
