@@ -130,7 +130,7 @@ onMounted(async () => {
 .search-input { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
 .search-input:focus { outline: none; border-color: var(--primary); }
 .question-list { display: flex; flex-direction: column; gap: 0.5rem; }
-.q-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #fff; border-radius: 8px; border: 1px solid var(--border); }
+.q-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: var(--card); border-radius: 8px; border: 1px solid var(--border); }
 .q-info { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
 .q-type-badge { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: var(--bg); color: var(--text-secondary); flex-shrink: 0; }
 .q-type-badge.single_choice { background: #e8f4fd; color: var(--primary); }
@@ -145,7 +145,7 @@ onMounted(async () => {
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: #fff; border-radius: 12px; padding: 2rem; width: 90%; max-width: 640px; max-height: 85vh; overflow-y: auto; }
+.modal { background: var(--card); border-radius: 12px; padding: 2rem; width: 90%; max-width: 640px; max-height: 85vh; overflow-y: auto; }
 .modal h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
 .modal-hint { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
 .modal-example { background: #f0f0f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; overflow-x: auto; }

@@ -195,14 +195,14 @@ async function login() {
 }
 .auth-input:focus {
   border-color: #667eea;
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
 }
 .auth-input::placeholder { color: #bbb; }
 
 /* 错误 */
 .error-msg {
-  background: #fff0f0;
+  background: rgba(255, 59, 48, 0.1);
   color: #e53e3e;
   padding: 0.7rem 1rem;
   border-radius: 10px;

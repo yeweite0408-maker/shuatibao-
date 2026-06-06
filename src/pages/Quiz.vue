@@ -404,17 +404,17 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 
 <style scoped>
 .quiz-layout { display: flex; height: calc(100vh - 50px); }
-.sidebar { width: 80px; background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem 0.75rem; flex-shrink: 0; overflow-y: auto; }
+.sidebar { width: 80px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem 0.75rem; flex-shrink: 0; overflow-y: auto; }
 .sidebar-header { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
 .progress-text { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
 .question-numbers { display: flex; flex-direction: column; gap: 0.35rem; align-items: center; }
-.q-num { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-size: 0.8rem; cursor: pointer; transition: all 0.1s; }
+.q-num { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font-size: 0.8rem; cursor: pointer; transition: all 0.1s; }
 .q-num.active { border-color: var(--primary); background: var(--primary); color: #fff; }
 .q-num.answered { border-color: var(--text-secondary); }
 .q-num.correct { border-color: var(--success); background: #d4edda; color: var(--success); }
 .q-num.wrong { border-color: var(--error); background: #f8d7da; color: var(--error); }
 .quiz-main { flex: 1; display: flex; justify-content: center; padding: 2rem; overflow-y: auto; }
-.quiz-card { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 2rem; max-width: 640px; width: 100%; align-self: flex-start; }
+.quiz-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 2rem; max-width: 640px; width: 100%; align-self: flex-start; }
 .quiz-card.empty { display: flex; justify-content: center; align-items: center; min-height: 300px; }
 .q-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
 .q-type { font-size: 0.75rem; background: var(--bg); padding: 0.2rem 0.6rem; border-radius: 4px; color: var(--text-secondary); }
@@ -424,7 +424,7 @@ onUnmounted(() => { if (timerInterval) clearInterval(timerInterval) })
 .q-text { font-size: 1.05rem; font-weight: 500; margin-bottom: 1.5rem; line-height: 1.6; }
 
 .options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
-.option { display: block; width: 100%; text-align: left; padding: 0.8rem 1rem; border: 2px solid var(--border); border-radius: 10px; background: #fff; font-size: 0.95rem; cursor: pointer; transition: all 0.15s; }
+.option { display: block; width: 100%; text-align: left; padding: 0.8rem 1rem; border: 2px solid var(--border); border-radius: 10px; background: var(--card); font-size: 0.95rem; cursor: pointer; transition: all 0.15s; }
 .option:hover:not(.disabled) { border-color: var(--primary); transform: translateX(3px); }
 .option.selected { border-color: var(--primary); background: #e8f4fd; }
 .option.correct { border-color: var(--success); background: #d4edda; }

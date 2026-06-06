@@ -64,9 +64,9 @@ function medal(rank) {
 .rank-list { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
 .rank-item { display: flex; align-items: center; padding: 0.8rem 1rem; gap: 0.75rem; border-top: 1px solid var(--border); transition: background 0.1s; }
 .rank-item:first-child { border-top: none; }
-.rank-item.gold { background: #fffbf0; }
-.rank-item.silver { background: #fafafa; }
-.rank-item.bronze { background: #fff8f0; }
+.rank-item.gold { background: rgba(255, 159, 10, 0.08); }
+.rank-item.silver { background: rgba(0, 0, 0, 0.03); }
+.rank-item.bronze { background: rgba(255, 159, 10, 0.05); }
 .rank-num { width: 2.5rem; font-size: 1.2rem; text-align: center; flex-shrink: 0; }
 .rank-name { flex: 1; font-weight: 500; }
 .rank-count { font-size: 0.9rem; color: var(--primary); font-weight: 600; }

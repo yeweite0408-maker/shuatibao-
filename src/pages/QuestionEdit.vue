@@ -106,13 +106,13 @@ async function save() {
 </script>
 
 <style scoped>
-.edit-card { max-width: 640px; margin: 2rem auto; background: #fff; border-radius: 12px; padding: 2rem; border: 1px solid var(--border); }
+.edit-card { max-width: 640px; margin: 2rem auto; background: var(--card); border-radius: 12px; padding: 2rem; border: 1px solid var(--border); }
 .edit-card h2 { font-size: 1.3rem; margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1.25rem; }
 .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem; }
 .form-input { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; }
 .form-input:focus { outline: none; border-color: var(--primary); }
-select.form-input { background: #fff; }
+select.form-input { background: var(--card); }
 textarea.form-input { resize: vertical; }
 .form-hint { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
 .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }

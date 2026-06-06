@@ -255,7 +255,7 @@ async function batchImport() {
 </script>
 
 <style scoped>
-.page-header { background: #fff; border-bottom: 1px solid var(--border); padding: 1.2rem 0; margin-bottom: 1.5rem; }
+.page-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 1.2rem 0; margin-bottom: 1.5rem; }
 .page-header h1 { font-size: 1.3rem; font-weight: 700; }
 .back-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; padding: 0; margin-bottom: 0.5rem; display: block; }
 .back-btn:hover { color: var(--text); }
@@ -269,7 +269,7 @@ async function batchImport() {
 .btn-quiz.exam { background: var(--error); color: #fff; }
 .btn-quiz:hover { opacity: 0.9; transform: translateY(-1px); }
 
-.question-table { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.question-table { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
 .table-header, .table-row { display: flex; align-items: center; padding: 0.75rem 1rem; gap: 0.75rem; }
 .table-header { background: var(--bg); font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
 .table-row { cursor: pointer; transition: background 0.1s; border-top: 1px solid var(--border); }
@@ -324,7 +324,7 @@ async function batchImport() {
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; }
+.modal { background: var(--card); border-radius: 14px; padding: 2rem; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; }
 .modal h3 { font-size: 1.2rem; margin-bottom: 0.3rem; }
 .modal-hint { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
 .modal-example { background: #f5f5f7; border-radius: 8px; padding: 0.6rem; margin-bottom: 0.5rem; overflow-x: auto; }

@@ -112,13 +112,13 @@ async function submit() {
 
 <style scoped>
 .feedback-page { padding-bottom: 3rem; }
-.page-header { background: #fff; border-bottom: 1px solid var(--border); padding: 1.2rem 0; margin-bottom: 1.5rem; }
+.page-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 1.2rem 0; margin-bottom: 1.5rem; }
 .page-header h1 { font-size: 1.3rem; font-weight: 700; }
 .back-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; }
 .back-btn:hover { color: var(--text); }
 .header-desc { font-size: 0.85rem; color: var(--text-secondary); }
 
-.feedback-form { background: #fff; border-radius: 14px; padding: 2rem; border: 1px solid var(--border); max-width: 600px; margin: 0 auto; }
+.feedback-form { background: var(--card); border-radius: 14px; padding: 2rem; border: 1px solid var(--border); max-width: 600px; margin: 0 auto; }
 .form-group { margin-bottom: 1.25rem; }
 .form-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.4rem; }
 .form-textarea { width: 100%; padding: 0.8rem; border: 2px solid var(--border); border-radius: 10px; font-size: 0.95rem; resize: vertical; font-family: inherit; }

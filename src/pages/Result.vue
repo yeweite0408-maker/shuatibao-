@@ -138,7 +138,7 @@ function retry() {
 </script>
 
 <style scoped>
-.result-card { max-width: 600px; margin: 2rem auto; text-align: center; background: #fff; border-radius: 12px; padding: 2rem; border: 1px solid var(--border); }
+.result-card { max-width: 600px; margin: 2rem auto; text-align: center; background: var(--card); border-radius: 12px; padding: 2rem; border: 1px solid var(--border); }
 .loading { display: flex; justify-content: center; align-items: center; min-height: 200px; }
 .score { font-size: 3.5rem; font-weight: 800; }
 .score.excellent { color: var(--success); }

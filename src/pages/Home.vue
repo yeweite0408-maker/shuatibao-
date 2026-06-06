@@ -332,7 +332,7 @@ async function requestPublish(name) {
 .import-result { margin-top: 0.75rem; font-size: 0.9rem; font-weight: 500; }
 
 .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; margin-bottom: 1.5rem; }
-.subject-card { display: flex; align-items: center; gap: 1rem; background: #fff; border-radius: 14px; padding: 1.2rem 1.2rem; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+.subject-card { display: flex; align-items: center; gap: 1rem; background: var(--card); border-radius: 14px; padding: 1.2rem 1.2rem; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
 .subject-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-color: var(--primary); }
 .card-emoji { font-size: 2rem; }
 .card-body { flex: 1; }
@@ -350,7 +350,7 @@ async function requestPublish(name) {
 .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
 
 
-.last-stats { background: #fff; border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid var(--border); }
+.last-stats { background: var(--card); border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid var(--border); }
 .last-stats h3 { font-size: 0.95rem; margin-bottom: 0.8rem; }
 .stats-row { display: flex; gap: 1rem; }
 .stat-item { flex: 1; text-align: center; }
@@ -377,7 +377,7 @@ async function requestPublish(name) {
 .scope-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: #fff; border-radius: 14px; padding: 2rem; width: 90%; max-width: 400px; }
+.modal { background: var(--card); border-radius: 14px; padding: 2rem; width: 90%; max-width: 400px; }
 .modal h3 { font-size: 1.2rem; margin-bottom: 0.3rem; }
 .modal-hint { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.8rem; }
 .modal-input { width: 100%; padding: 0.7rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
