@@ -40,7 +40,7 @@ app.use(express.json({ limit: '5mb' }))
 // 4. 登录/注册限流（防止暴力破解）
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 30,
   message: { error: '请求过于频繁，请 15 分钟后再试' },
   standardHeaders: true,
   legacyHeaders: false
@@ -48,10 +48,11 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 
-// 5. 通用限流（每个 IP 每分钟最多 200 次请求）
+// 5. 通用限流（仅限非管理页面，防止管理员操作被限）
 const generalLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 200,
+  skip: (req) => req.path.startsWith('/api/admin') || req.path.startsWith('/api/auth/me'),
   standardHeaders: true,
   legacyHeaders: false
 })
