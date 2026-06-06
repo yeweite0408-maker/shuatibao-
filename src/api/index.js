@@ -22,6 +22,7 @@ export default {
   batchImportQuestions(questions, scope) { return api.post('/questions/batch', { questions, scope }) },
   getSubjects() { return api.get('/questions/subjects') },
   publishSubject(subject) { return api.post('/questions/publish', { subject }) },
+  requestPublish(subject) { return api.post('/questions/publish-request', { subject }) },
   searchQuestions(q) { return api.get(`/questions/search/all?q=${encodeURIComponent(q)}`) },
 
   submitRecord(data) { return api.post('/records', data) },
@@ -46,6 +47,9 @@ export default {
   getAdminOverview() { return api.get('/admin/stats/overview') },
   getPersonalSubjects() { return api.get('/admin/subjects/personal') },
   publishPersonalSubject(subject, userId) { return api.post('/admin/subjects/publish', { subject, userId }) },
+  getPublishRequests() { return api.get('/admin/publish-requests') },
+  approvePublishRequest(id) { return api.post(`/admin/publish-requests/${id}/approve`) },
+  rejectPublishRequest(id) { return api.post(`/admin/publish-requests/${id}/reject`) },
   getUserDetailStats(id) { return api.get(`/admin/users/${id}/stats`) },
   getReports() { return api.get('/reports') },
   submitReport(data) { return api.post('/reports', data) },

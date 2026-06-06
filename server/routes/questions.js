@@ -53,11 +53,34 @@ router.get('/search/all', (req, res) => {
 })
 
 // 公开个人题库（发布到公共）
+router.post('/publish-request', requireAuth, (req, res) => {
+  const { subject } = req.body
+  if (!subject) return res.status(400).json({ error: '请指定题库名称' })
+  if (req.user.role === 'admin') {
+    run("UPDATE questions SET scope = 'public' WHERE subject = ?", [subject])
+    res.json({ success: true })
+  } else {
+    const existing = get("SELECT id FROM publish_requests WHERE subject = ? AND user_id = ? AND status = 'pending'", [subject, req.user.id])
+    if (existing) return res.json({ success: true, message: '已提交过审核请求' })
+    run("INSERT INTO publish_requests (subject, user_id, username) VALUES (?, ?, ?)", [subject, req.user.id, req.user.username])
+    res.json({ success: true, message: '审核请求已提交' })
+  }
+})
+
 router.post('/publish', requireAuth, (req, res) => {
   const { subject } = req.body
   if (!subject) return res.status(400).json({ error: '请指定题库名称' })
-  const result = run("UPDATE questions SET scope = 'public' WHERE subject = ? AND uploaded_by = ?", [subject, req.user.id])
-  res.json({ success: true, updated: result.changes })
+  if (req.user.role === 'admin') {
+    // 管理员直接发布
+    const result = run("UPDATE questions SET scope = 'public' WHERE subject = ? AND uploaded_by = ?", [subject, req.user.id])
+    res.json({ success: true, updated: result.changes })
+  } else {
+    // 普通用户：提交审核请求
+    const existing = get("SELECT id FROM publish_requests WHERE subject = ? AND user_id = ? AND status = 'pending'", [subject, req.user.id])
+    if (existing) return res.json({ success: true, message: '已提交过审核请求，请等待管理员处理' })
+    run("INSERT INTO publish_requests (subject, user_id, username) VALUES (?, ?, ?)", [subject, req.user.id, req.user.username])
+    res.json({ success: true, message: '审核请求已提交，请等待管理员处理' })
+  }
 })
 
 // 按科目获取题目统计（含全局答题情况）

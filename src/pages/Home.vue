@@ -51,8 +51,8 @@
               <span class="card-count">{{ s.count }} 道题</span>
             </div>
             <div class="card-personal-actions" @click.stop>
-              <button class="btn-publish" @click="publishSubject(s.subject)" title="申请发布到公共题库" v-if="auth.user?.role === 'admin'">🌐 发布</button>
-              <span v-else class="private-label">仅自己可见</span>
+              <button class="btn-publish" @click="publishSubject(s.subject)" title="发布到公共题库" v-if="auth.user?.role === 'admin'">🌐 发布</button>
+              <button class="btn-publish" @click="requestPublish(s.subject)" title="申请发布到公共题库" v-else>📩 申请发布</button>
             </div>
           </div>
         </div>
@@ -286,11 +286,18 @@ async function startHomeExam() {
 }
 
 async function publishSubject(name) {
-  if (!confirm(`确定将"${name}"发布到公共题库吗？所有用户可见。`)) return
+  if (!confirm(`确定将"${name}"发布到公共题库吗？`)) return
   try {
     await api.publishSubject(name)
     const res = await api.getSubjects()
     subjects.value = res.data
+  } catch {}
+}
+
+async function requestPublish(name) {
+  try {
+    const res = await api.requestPublish(name)
+    alert(res.data.message || '审核请求已提交')
   } catch {}
 }
 

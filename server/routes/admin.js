@@ -11,6 +11,25 @@ router.use((req, res, next) => {
   next()
 })
 
+// 发布审核请求
+router.get('/publish-requests', (req, res) => {
+  const rows = all("SELECT * FROM publish_requests ORDER BY created_at DESC")
+  res.json(rows)
+})
+
+router.post('/publish-requests/:id/approve', (req, res) => {
+  const pr = get("SELECT * FROM publish_requests WHERE id = ?", [req.params.id])
+  if (!pr) return res.status(404).json({ error: '请求不存在' })
+  run("UPDATE questions SET scope = 'public' WHERE subject = ? AND uploaded_by = ?", [pr.subject, pr.user_id])
+  run("UPDATE publish_requests SET status = 'approved' WHERE id = ?", [req.params.id])
+  res.json({ success: true })
+})
+
+router.post('/publish-requests/:id/reject', (req, res) => {
+  run("UPDATE publish_requests SET status = 'rejected' WHERE id = ?", [req.params.id])
+  res.json({ success: true })
+})
+
 // 用户管理
 router.get('/users', (req, res) => {
   const users = all('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC')

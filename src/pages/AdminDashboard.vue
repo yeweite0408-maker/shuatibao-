@@ -22,6 +22,7 @@
         <button class="tab" :class="{ active: tab === 'pending' }" @click="tab='pending'">⏳ 待审核 <span v-if="overview?.pending" class="tab-badge">{{ overview.pending }}</span></button>
         <button class="tab" :class="{ active: tab === 'users' }" @click="tab='users'">👥 用户</button>
         <button class="tab" :class="{ active: tab === 'reports' }" @click="tab='reports'">🚨 纠错</button>
+        <button class="tab" :class="{ active: tab === 'pubreq' }" @click="tab='pubreq'">📩 发布审核</button>
         <button class="tab" :class="{ active: tab === 'feedbacks' }" @click="tab='feedbacks'">💬 反馈</button>
       </div>
 
@@ -149,6 +150,25 @@
         </div>
       </div>
 
+      <!-- ====== 发布审核 ====== -->
+      <div v-show="tab === 'pubreq'">
+        <div class="pr-list" v-if="publishRequests.length">
+          <div class="pr-item" v-for="pr in publishRequests" :key="pr.id">
+            <div class="pr-info">
+              <span class="pr-subject">{{ pr.subject }}</span>
+              <span class="pr-user">by {{ pr.username }}</span>
+              <span class="pr-status" :class="pr.status">{{ pr.status === 'approved' ? '已通过' : pr.status === 'rejected' ? '已拒绝' : '待审核' }}</span>
+              <span class="pr-date">{{ pr.created_at?.slice(0, 16) }}</span>
+            </div>
+            <div class="pr-actions" v-if="pr.status === 'pending'">
+              <button class="btn-approve btn-xs" @click="approvePublish(pr.id)">✓ 通过</button>
+              <button class="btn-reject btn-xs" @click="rejectPublish(pr.id)">✗ 拒绝</button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty">暂无发布审核请求</div>
+      </div>
+
       <!-- ====== 题目纠错 ====== -->
       <div v-show="tab === 'reports'">
         <div class="report-list" v-if="reports.length">
@@ -222,6 +242,7 @@ const searchText = ref('')
 
 const reports = ref([])
 const personalSubjects = ref([])
+const publishRequests = ref([])
 const userDetail = ref(null)
 
 function rateColor(r) { if(r>=70) return 'var(--success)'; if(r>=40) return 'var(--warning)'; return 'var(--error)' }
@@ -257,8 +278,8 @@ async function loadSubjectQuestions(subject) {
 
 async function loadAll() {
   try {
-    const [ov, pq, us, fb, rp, ps] = await Promise.all([
-      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports(), api.getPersonalSubjects()
+    const [ov, pq, us, fb, rp, ps, pr] = await Promise.all([
+      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports(), api.getPersonalSubjects(), api.getPublishRequests()
     ])
     overview.value = ov.data
     pendingQuestions.value = pq.data
@@ -266,6 +287,7 @@ async function loadAll() {
     feedbackList.value = fb.data
     reports.value = rp.data
     personalSubjects.value = ps.data
+    publishRequests.value = pr.data
   } catch {}
 }
 
@@ -276,6 +298,17 @@ async function viewUser(id) {
     const res = await api.getUserDetailStats(id)
     userDetail.value = res.data
   } catch {}
+}
+
+async function approvePublish(id) {
+  await api.approvePublishRequest(id)
+  const pr = await api.getPublishRequests()
+  publishRequests.value = pr.data
+}
+async function rejectPublish(id) {
+  await api.rejectPublishRequest(id)
+  const pr = await api.getPublishRequests()
+  publishRequests.value = pr.data
 }
 
 async function resolveReport(id, status) {
@@ -448,6 +481,18 @@ async function reply(id) {
 .btn-del { padding: 0.25rem 0.5rem; border: 1px solid var(--error); border-radius: 6px; background: none; color: var(--error); font-size: 0.75rem; cursor: pointer; }
 .btn-del:disabled { opacity: 0.3; cursor: not-allowed; }
 .btn-view { padding:0.25rem 0.4rem; border:1px solid var(--primary); border-radius:6px; background:none; color:var(--primary); font-size:0.8rem; cursor:pointer; }
+.pr-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
+.pr-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; border-top:1px solid var(--border); }
+.pr-item:first-child { border-top:none; }
+.pr-info { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; flex:1; min-width:0; }
+.pr-subject { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; background:#e8e8f0; color:#555; flex-shrink:0; }
+.pr-user { font-weight:600; flex-shrink:0; }
+.pr-status { font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:4px; }
+.pr-status.pending { background:#fff3cd; color:#856404; }
+.pr-status.approved { background:#d4edda; color:var(--success); }
+.pr-status.rejected { background:#f8d7da; color:var(--error); }
+.pr-date { color:var(--text-secondary); font-size:0.75rem; margin-left:auto; }
+.pr-actions { display:flex; gap:0.3rem; flex-shrink:0; }
 .sa-card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
 .btn-view:hover { background:var(--primary); color:#fff; }
 
