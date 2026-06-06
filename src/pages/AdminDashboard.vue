@@ -53,6 +53,7 @@
                   <span class="a-user" v-if="q.uploader_name">by {{ q.uploader_name }}</span>
                 </div>
                 <div class="sa-q-actions">
+                  <input type="checkbox" v-model="selectedIds" :value="q.id" class="q-cb" />
                   <button class="btn-sm-icon" @click="editQuestion(q.id)">✏️</button>
                   <button class="btn-sm-icon" @click="deleteOneQuestion(q.id)">🗑️</button>
                   <button v-if="q.status==='pending'" class="btn-xs btn-approve" @click="approveQ(q.id)">通过</button>
@@ -60,6 +61,15 @@
                 </div>
               </div>
               <div v-if="!allQuestionsMap[s.subject]?.length" class="sa-empty">暂无题目</div>
+              <div class="sa-move-bar" v-if="selectedIds.length && expandedSubject === s.subject">
+                <span>已选 {{ selectedIds.length }} 题</span>
+                <select v-model="moveTarget" class="move-select">
+                  <option value="">移动到...</option>
+                  <option v-for="t in allSubjects" :key="t" :value="t" v-if="t !== s.subject">{{ t }}</option>
+                </select>
+                <button class="btn-xs btn-approve" @click="doBatchMove(s.subject)">移动</button>
+                <button class="btn-xs btn-reject" @click="selectedIds=[]">取消</button>
+              </div>
             </div>
           </div>
         </div>
@@ -242,6 +252,9 @@ const searchText = ref('')
 
 const reports = ref([])
 const personalSubjects = ref([])
+const selectedIds = ref([])
+const moveTarget = ref('')
+const allSubjects = computed(() => (overview.value?.subjects || []).map(s => s.subject))
 const publishRequests = ref([])
 const userDetail = ref(null)
 
@@ -380,6 +393,15 @@ async function renameSubject(oldName) {
   delete allQuestionsMap.value[oldName]
   loadAll()
 }
+async function doBatchMove() {
+  if (!selectedIds.value.length || !moveTarget.value) return
+  await api.batchMoveQuestions(selectedIds.value, moveTarget.value)
+  selectedIds.value = []
+  moveTarget.value = ''
+  if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value)
+  loadAll()
+}
+
 async function publishPersonal(subject, userId) {
   if (!confirm(`确定将"${subject}"发布到公共题库吗？`)) return
   await api.publishPersonalSubject(subject, userId)
@@ -481,6 +503,9 @@ async function reply(id) {
 .btn-del { padding: 0.25rem 0.5rem; border: 1px solid var(--error); border-radius: 6px; background: none; color: var(--error); font-size: 0.75rem; cursor: pointer; }
 .btn-del:disabled { opacity: 0.3; cursor: not-allowed; }
 .btn-view { padding:0.25rem 0.4rem; border:1px solid var(--primary); border-radius:6px; background:none; color:var(--primary); font-size:0.8rem; cursor:pointer; }
+.q-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--primary); }
+.sa-move-bar { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; border-top:1px solid var(--border); background:var(--bg); font-size:0.8rem; }
+.move-select { padding:0.25rem 0.4rem; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; background:var(--card); color:var(--text); }
 .pr-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
 .pr-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; border-top:1px solid var(--border); }
 .pr-item:first-child { border-top:none; }

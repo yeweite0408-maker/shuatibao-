@@ -108,6 +108,20 @@ router.post('/subjects/publish', (req, res) => {
   res.json({ success: true })
 })
 
+// 批量移动题目到其他科目
+router.post('/questions/batch-move', (req, res) => {
+  const { ids, targetSubject } = req.body
+  if (!Array.isArray(ids) || ids.length === 0 || !targetSubject) {
+    return res.status(400).json({ error: '参数错误' })
+  }
+  const stmt = db.prepare("UPDATE questions SET subject = ? WHERE id = ?")
+  const move = db.transaction(() => {
+    for (const id of ids) { stmt.run(targetSubject, id) }
+  })
+  move()
+  res.json({ success: true, moved: ids.length })
+})
+
 // 题库管理（按科目）
 router.put('/subjects/:name', (req, res) => {
   const newName = req.body.name
