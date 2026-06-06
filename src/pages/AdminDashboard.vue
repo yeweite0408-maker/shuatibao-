@@ -1,234 +1,254 @@
 <template>
-  <div class="admin-page">
-    <div class="page-header">
-      <div class="container">
-        <button class="back-btn" @click="$router.push('/')">← 返回首页</button>
-        <h1>⚙️ 管理后台</h1>
+  <div class="admin-layout">
+    <!-- 侧边栏 -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">📚</span>
+        <span class="brand-text">刷题宝管理</span>
       </div>
-    </div>
+      <nav class="sidebar-nav">
+        <a v-for="item in menu" :key="item.key" :class="['nav-item', { active: activeTab === item.key }]" @click="activeTab = item.key">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+          <span class="nav-badge" v-if="item.badge">{{ item.badge }}</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <router-link to="/" class="back-link">← 返回前台</router-link>
+      </div>
+    </aside>
 
-    <div class="container">
+    <!-- 主内容区 -->
+    <main class="admin-main">
       <!-- 概览 -->
-      <div class="overview-cards" v-if="overview">
-        <div class="ov-card" @click="tab='subjects'"><span class="ov-num">{{ subjects.length }}</span><span class="ov-lbl">题库</span></div>
-        <div class="ov-card" @click="tab='subjects'"><span class="ov-num">{{ overview.questions }}</span><span class="ov-lbl">题目</span></div>
-        <div class="ov-card warn" @click="tab='pending'"><span class="ov-num">{{ overview.pending }}</span><span class="ov-lbl">待审核</span></div>
-        <div class="ov-card" @click="tab='feedbacks'"><span class="ov-num">{{ overview.records }}</span><span class="ov-lbl">答题记录</span></div>
+      <div v-if="activeTab === 'overview'" class="admin-content">
+        <h2 class="page-title">仪表盘</h2>
+        <div class="metrics" v-if="overview">
+          <div class="metric-card" v-for="m in metrics" :key="m.label">
+            <div class="metric-icon" :style="{ background: m.color }">{{ m.icon }}</div>
+            <div class="metric-body">
+              <span class="metric-val">{{ m.val }}</span>
+              <span class="metric-lbl">{{ m.label }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3>各科目概览</h3>
+          <div class="subject-chart" v-if="overview?.subjects?.length">
+            <div class="chart-row" v-for="s in overview.subjects" :key="s.subject">
+              <span class="chart-lbl">{{ s.subject }}</span>
+              <div class="chart-bar"><div class="chart-fill" :style="{ width: Math.min(100, s.count) + '%' }"></div></div>
+              <span class="chart-num">{{ s.count }} 题</span>
+              <span class="chart-rate" v-if="s.avgCorrect !== null">{{ s.avgCorrect }}%</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Tab 导航 -->
-      <div class="tab-bar">
-        <button class="tab" :class="{ active: tab === 'subjects' }" @click="tab='subjects'">📚 题库</button>
-        <button class="tab" :class="{ active: tab === 'pending' }" @click="tab='pending'">⏳ 待审核 <span v-if="overview?.pending" class="tab-badge">{{ overview.pending }}</span></button>
-        <button class="tab" :class="{ active: tab === 'users' }" @click="tab='users'">👥 用户</button>
-        <button class="tab" :class="{ active: tab === 'reports' }" @click="tab='reports'">🚨 纠错</button>
-        <button class="tab" :class="{ active: tab === 'pubreq' }" @click="tab='pubreq'">📩 发布审核</button>
-        <button class="tab" :class="{ active: tab === 'feedbacks' }" @click="tab='feedbacks'">💬 反馈</button>
+      <!-- 题库管理 -->
+      <div v-if="activeTab === 'subjects'" class="admin-content">
+        <h2 class="page-title">题库管理</h2>
+
+        <div class="section-card" v-for="s in overview?.subjects || []" :key="s.subject">
+          <div class="section-card-header" @click="toggleSubject(s.subject)">
+            <span>{{ expandedSubject === s.subject ? '▼' : '▶' }} {{ s.subject }}</span>
+            <span class="sc-actions">
+              <span class="sc-count">{{ s.count }} 题</span>
+              <button class="sc-btn" @click.stop="exportSubject(s.subject)" title="导出">📤</button>
+              <button class="sc-btn" @click.stop="renameSubject(s.subject)" title="重命名">✏️</button>
+              <button class="sc-btn" @click.stop="deleteSubject(s.subject)" title="删除">🗑️</button>
+            </span>
+          </div>
+          <div class="section-card-body" v-if="expandedSubject === s.subject">
+            <div class="aq-table">
+              <div class="aq-row aq-header">
+                <span style="width:2rem"></span>
+                <span style="width:3rem">题型</span>
+                <span style="flex:1">题目</span>
+                <span style="width:4.5rem">状态</span>
+                <span style="width:6rem">操作</span>
+              </div>
+              <div class="aq-row" v-for="q in subjectQuestions(s.subject)" :key="q.id">
+                <span style="width:2rem"><input type="checkbox" v-model="selectedIds" :value="q.id" class="q-cb" /></span>
+                <span style="width:3rem"><span class="aq-type">{{ typeLabel(q.type) }}</span></span>
+                <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ q.question }}</span>
+                <span style="width:4.5rem"><span class="aq-status" :class="q.status">{{ statusLabel(q.status) }}</span></span>
+                <span style="width:6rem; display:flex; gap:0.2rem">
+                  <button class="sc-btn" @click="editQuestion(q.id)">✏️</button>
+                  <button class="sc-btn" @click="deleteOneQuestion(q.id)">🗑️</button>
+                  <button v-if="q.status==='pending'" class="sc-btn sc-ok" @click="approveQ(q.id)">✓</button>
+                  <button v-if="q.status==='pending'" class="sc-btn sc-no" @click="rejectQ(q.id)">✗</button>
+                </span>
+              </div>
+            </div>
+            <div class="move-bar" v-if="selectedIds.length && expandedSubject === s.subject">
+              <span>已选 {{ selectedIds.length }} 题</span>
+              <select v-model="moveTarget" class="move-sel"><option value="">移动到...</option>
+                <option v-for="t in subjectList" :key="t" :value="t" v-if="t !== s.subject">{{ t }}</option>
+              </select>
+              <button class="btn-xs btn-ok" @click="doBatchMove">移动</button>
+              <button class="btn-xs btn-no" @click="selectedIds=[]">取消</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 个人题库 -->
+        <div class="section-card" v-if="personalSubjects.length">
+          <div class="section-card-header"><span>👤 用户个人题库</span></div>
+          <div class="aq-table">
+            <div class="aq-row" v-for="s in personalSubjects" :key="s.subject">
+              <span style="flex:1">{{ s.subject }} <small>by {{ s.creator_name }}</small></span>
+              <span style="width:3rem">{{ s.count }} 题</span>
+              <span style="width:6rem"><button class="sc-btn sc-ok" @click="publishPersonal(s.subject, s.uploaded_by)">🌐 发布</button></span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- ====== 题库管理 ====== -->
-      <div v-show="tab === 'subjects'">
-        <div class="subject-admin-list">
-          <div class="subject-admin-card" v-for="s in subjects" :key="s.subject">
-            <div class="sa-header" @click="toggleSubject(s.subject)">
-              <span class="sa-icon">{{ expandedSubject === s.subject ? '▼' : '▶' }}</span>
-              <span class="sa-name">{{ s.subject }}</span>
-              <span class="sa-count">{{ s.count }} 题</span>
-              <span class="sa-avg" v-if="s.avgCorrect !== null">{{ s.avgCorrect }}% 正确率</span>
-              <button class="btn-sm-icon" @click.stop="exportSubject(s.subject)" title="导出为JSON">📤</button>
-              <span class="sa-actions" @click.stop>
-                <button class="btn-sm-icon" @click="renameSubject(s.subject)" title="重命名">✏️</button>
-                <button class="btn-sm-icon" @click="deleteSubject(s.subject)" title="删除题库">🗑️</button>
+      <!-- 用户管理 -->
+      <div v-if="activeTab === 'users'" class="admin-content">
+        <h2 class="page-title">用户管理 <small>({{ users.length }})</small></h2>
+        <div class="section-card">
+          <div class="aq-table">
+            <div class="aq-row aq-header">
+              <span style="flex:1">用户名</span>
+              <span style="width:4rem">角色</span>
+              <span style="width:5rem">注册时间</span>
+              <span style="width:8rem">操作</span>
+            </div>
+            <div class="aq-row" v-for="u in users" :key="u.id">
+              <span style="flex:1; font-weight:500">{{ u.username }}</span>
+              <span style="width:4rem"><span class="aq-role" :class="u.role">{{ u.role === 'admin' ? '管理员' : '用户' }}</span></span>
+              <span style="width:5rem; color:var(--text-secondary); font-size:0.82rem">{{ u.created_at?.slice(0, 10) }}</span>
+              <span style="width:8rem; display:flex; gap:0.3rem">
+                <button class="sc-btn" @click="viewUser(u.id)" title="查看数据">📊</button>
+                <select v-model="u.role" @change="changeRole(u.id, u.role)" class="role-sel">
+                  <option value="user">用户</option>
+                  <option value="admin">管理员</option>
+                </select>
+                <button class="sc-btn sc-no" @click="deleteUser(u.id)" :disabled="isSelf(u.id)" title="删除">🗑️</button>
               </span>
             </div>
-            <div class="sa-body" v-if="expandedSubject === s.subject">
-              <div class="sa-search" v-if="allQuestionsMap[s.subject]?.length > 5">
-                <input v-model="searchText" class="sa-search-input" placeholder="搜索题目..." />
-              </div>
-              <div class="sa-question" v-for="q in filteredQuestions(s.subject)" :key="q.id">
-                <div class="sa-q-info">
-                  <span class="a-type">{{ typeLabel(q.type) }}</span>
-                  <span class="a-status" :class="q.status">{{ statusLabel(q.status) }}</span>
-                  <span class="a-text">{{ q.question }}</span>
-                  <span class="a-user" v-if="q.uploader_name">by {{ q.uploader_name }}</span>
-                </div>
-                <div class="sa-q-actions">
-                  <input type="checkbox" v-model="selectedIds" :value="q.id" class="q-cb" />
-                  <button class="btn-sm-icon" @click="editQuestion(q.id)">✏️</button>
-                  <button class="btn-sm-icon" @click="deleteOneQuestion(q.id)">🗑️</button>
-                  <button v-if="q.status==='pending'" class="btn-xs btn-approve" @click="approveQ(q.id)">通过</button>
-                  <button v-if="q.status==='pending'" class="btn-xs btn-reject" @click="rejectQ(q.id)">拒绝</button>
-                </div>
-              </div>
-              <div v-if="!allQuestionsMap[s.subject]?.length" class="sa-empty">暂无题目</div>
-              <div class="sa-move-bar" v-if="selectedIds.length && expandedSubject === s.subject">
-                <span>已选 {{ selectedIds.length }} 题</span>
-                <select v-model="moveTarget" class="move-select">
-                  <option value="">移动到...</option>
-                  <option v-for="t in allSubjects" :key="t" :value="t" v-if="t !== s.subject">{{ t }}</option>
-                </select>
-                <button class="btn-xs btn-approve" @click="doBatchMove(s.subject)">移动</button>
-                <button class="btn-xs btn-reject" @click="selectedIds=[]">取消</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- ====== 个人题库（管理员可见所有用户） ====== -->
-      <div v-show="tab === 'subjects'" style="margin-top:0.5rem;">
-        <h2 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;">👤 用户个人题库</h2>
-        <div class="sa-card" v-if="personalSubjects.length">
-          <div class="sa-question" v-for="s in personalSubjects" :key="s.subject + s.uploaded_by">
-            <div class="sa-q-info">
-              <span class="a-subject">{{ s.subject }}</span>
-              <span class="a-user">by {{ s.creator_name }}</span>
-              <span class="a-text">{{ s.count }} 题</span>
-            </div>
-            <div class="sa-q-actions">
-              <button class="btn-approve btn-xs" @click="publishPersonal(s.subject, s.uploaded_by)">🌐 发布到公共</button>
-            </div>
+      <!-- 待审核 -->
+      <div v-if="activeTab === 'pending'" class="admin-content">
+        <h2 class="page-title">待审核题目</h2>
+        <div class="section-card" v-if="pendingQuestions.length">
+          <div class="aq-row aq-header">
+            <span style="width:5rem">科目</span>
+            <span style="width:3rem">题型</span>
+            <span style="flex:1">题目</span>
+            <span style="width:8rem">操作</span>
+          </div>
+          <div class="aq-row" v-for="q in pendingQuestions" :key="q.id">
+            <span style="width:5rem">{{ q.subject }}</span>
+            <span style="width:3rem">{{ typeLabel(q.type) }}</span>
+            <span style="flex:1">{{ q.question }}</span>
+            <span style="width:8rem; display:flex; gap:0.3rem">
+              <button class="sc-btn sc-ok" @click="approve(q.id)">✓ 通过</button>
+              <button class="sc-btn sc-no" @click="reject(q.id)">✗ 拒绝</button>
+            </span>
           </div>
         </div>
-        <div v-else style="font-size:0.85rem;color:var(--text-secondary);padding:0.5rem 0;">暂无个人题库</div>
+        <div v-else class="empty-card">暂无待审核题目</div>
       </div>
 
-      <!-- ====== 待审核 ====== -->
-      <div v-show="tab === 'pending'">
-        <div v-if="pendingQuestions.length === 0" class="empty">暂无待审核题目</div>
-        <div class="review-list" v-else>
-          <div class="review-item" v-for="q in pendingQuestions" :key="q.id">
-            <div class="review-info">
-              <span class="review-subject">{{ q.subject }}</span>
-              <span class="review-type">{{ typeLabel(q.type) }}</span>
-              <span class="review-q">{{ q.question }}</span>
-              <span class="review-user" v-if="q.uploader_name">by {{ q.uploader_name }}</span>
-            </div>
-            <div class="review-actions">
-              <button class="btn-approve" @click="approve(q.id)">✓ 通过</button>
-              <button class="btn-reject" @click="reject(q.id)">✗ 拒绝</button>
-            </div>
+      <!-- 发布审核 -->
+      <div v-if="activeTab === 'publish'" class="admin-content">
+        <h2 class="page-title">发布审核</h2>
+        <div class="section-card" v-if="publishRequests.length">
+          <div class="aq-row aq-header">
+            <span style="width:6rem">题库</span>
+            <span style="width:5rem">申请人</span>
+            <span style="width:5rem">状态</span>
+            <span style="width:5rem">时间</span>
+            <span style="width:8rem">操作</span>
+          </div>
+          <div class="aq-row" v-for="pr in publishRequests" :key="pr.id">
+            <span style="width:6rem">{{ pr.subject }}</span>
+            <span style="width:5rem">{{ pr.username }}</span>
+            <span style="width:5rem"><span class="aq-status" :class="pr.status">{{ pr.status==='approved'?'已通过':pr.status==='rejected'?'已拒绝':'待审核' }}</span></span>
+            <span style="width:5rem; font-size:0.82rem">{{ pr.created_at?.slice(0,10) }}</span>
+            <span style="width:8rem; display:flex; gap:0.3rem" v-if="pr.status==='pending'">
+              <button class="sc-btn sc-ok" @click="approvePublish(pr.id)">✓ 通过</button>
+              <button class="sc-btn sc-no" @click="rejectPublish(pr.id)">✗ 拒绝</button>
+            </span>
           </div>
         </div>
+        <div v-else class="empty-card">暂无发布请求</div>
       </div>
 
-      <!-- ====== 用户管理 ====== -->
-      <div v-show="tab === 'users'">
-        <div class="user-list">
-          <div class="user-item" v-for="u in users" :key="u.id">
-            <div class="user-info">
-              <span class="user-name">{{ u.username }}</span>
-              <span class="user-role" :class="u.role">{{ u.role === 'admin' ? '管理员' : '用户' }}</span>
-              <span class="user-date">{{ u.created_at?.slice(0, 10) }}</span>
-            </div>
-            <div class="user-actions">
-              <select v-model="u.role" @change="changeRole(u.id, u.role)" class="role-select">
-                <option value="user">用户</option>
-                <option value="admin">管理员</option>
-              </select>
-              <button class="btn-view" @click="viewUser(u.id)">📊</button>
-              <button class="btn-del" @click="deleteUser(u.id)" :disabled="isSelf(u.id)">删除</button>
-            </div>
+      <!-- 纠错 -->
+      <div v-if="activeTab === 'reports'" class="admin-content">
+        <h2 class="page-title">题目纠错</h2>
+        <div class="section-card" v-if="reports.length">
+          <div class="aq-row aq-header">
+            <span style="width:5rem">科目</span>
+            <span style="width:3rem">用户</span>
+            <span style="flex:1">题目</span>
+            <span style="width:4rem">状态</span>
+            <span style="width:8rem">操作</span>
+          </div>
+          <div class="aq-row" v-for="r in reports" :key="r.id">
+            <span style="width:5rem">{{ r.question_subject }}</span>
+            <span style="width:3rem">{{ r.username }}</span>
+            <span style="flex:1; white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.question_text }}</span>
+            <span style="width:4rem"><span class="aq-status" :class="r.status">{{ r.status==='resolved'?'已处理':r.status==='rejected'?'已驳回':'待处理' }}</span></span>
+            <span style="width:8rem; display:flex; gap:0.2rem" v-if="r.status==='pending'">
+              <input v-model="replyTexts[r.id]" class="rp-input" placeholder="回复..." style="flex:1;min-width:60px" @keyup.enter="resolveReport(r.id,'resolved')" />
+              <button class="sc-btn sc-ok" @click="resolveReport(r.id,'resolved')">✓</button>
+              <button class="sc-btn sc-no" @click="resolveReport(r.id,'rejected')">✗</button>
+            </span>
           </div>
         </div>
+        <div v-else class="empty-card">暂无纠错反馈</div>
       </div>
 
-      <!-- 用户详情弹窗 -->
-      <div class="modal-overlay" v-if="userDetail" @click.self="userDetail = null">
-        <div class="modal modal-wide">
-          <h3>📊 {{ userDetail.user.username }} 的学习数据</h3>
-          <div class="ud-stats">
-            <div class="ud-card"><span class="ud-num">{{ userDetail.total }}</span>总答题</div>
-            <div class="ud-card correct"><span class="ud-num">{{ userDetail.correct }}</span>正确</div>
-            <div class="ud-card wrong"><span class="ud-num">{{ userDetail.wrong }}</span>错误</div>
+      <!-- 反馈 -->
+      <div v-if="activeTab === 'feedback'" class="admin-content">
+        <h2 class="page-title">意见反馈</h2>
+        <div class="section-card" v-if="feedbackList.length">
+          <div class="aq-row aq-header">
+            <span style="width:4rem">用户</span>
+            <span style="width:4rem">状态</span>
+            <span style="flex:1">内容</span>
+            <span style="width:8rem">操作</span>
           </div>
-          <div v-if="userDetail.bySubject?.length" class="ud-subjects">
-            <div class="ud-subj" v-for="s in userDetail.bySubject" :key="s.subject">
-              <span class="ud-lbl">{{ s.subject }}</span>
-              <div class="ud-bar"><div class="ud-fill" :style="{width:s.rate+'%', background:rateColor(s.rate)}"></div></div>
-              <span class="ud-pct">{{ s.rate }}%（{{ s.count }}题）</span>
-            </div>
-          </div>
-          <div v-if="userDetail.recentRecords?.length" class="ud-records">
-            <h4>最近答题</h4>
-            <div class="ud-rec" v-for="r in userDetail.recentRecords.slice(0, 10)" :key="r.id">
-              <span class="ud-rec-icon" :class="r.is_correct ? 'ok' : 'no'">{{ r.is_correct ? '✓' : '✗' }}</span>
-              <span class="ud-rec-q">{{ r.question?.slice(0, 40) }}...</span>
-            </div>
-          </div>
-          <button class="btn btn-secondary" @click="userDetail=null" style="margin-top:0.8rem;width:100%">关闭</button>
-        </div>
-      </div>
-
-      <!-- ====== 发布审核 ====== -->
-      <div v-show="tab === 'pubreq'">
-        <div class="pr-list" v-if="publishRequests.length">
-          <div class="pr-item" v-for="pr in publishRequests" :key="pr.id">
-            <div class="pr-info">
-              <span class="pr-subject">{{ pr.subject }}</span>
-              <span class="pr-user">by {{ pr.username }}</span>
-              <span class="pr-status" :class="pr.status">{{ pr.status === 'approved' ? '已通过' : pr.status === 'rejected' ? '已拒绝' : '待审核' }}</span>
-              <span class="pr-date">{{ pr.created_at?.slice(0, 16) }}</span>
-            </div>
-            <div class="pr-actions" v-if="pr.status === 'pending'">
-              <button class="btn-approve btn-xs" @click="approvePublish(pr.id)">✓ 通过</button>
-              <button class="btn-reject btn-xs" @click="rejectPublish(pr.id)">✗ 拒绝</button>
-            </div>
+          <div class="aq-row" v-for="item in feedbackList" :key="item.id">
+            <span style="width:4rem">{{ item.username }}</span>
+            <span style="width:4rem"><span class="aq-status" :class="item.status">{{ item.status==='replied'?'已回复':'待处理' }}</span></span>
+            <span style="flex:1; white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ item.content }}</span>
+            <span style="width:8rem; display:flex; gap:0.2rem" v-if="item.status!=='replied'">
+              <input v-model="replyTexts[item.id]" class="rp-input" placeholder="回复..." style="flex:1;min-width:60px" @keyup.enter="reply(item.id)" />
+              <button class="sc-btn sc-ok" @click="reply(item.id)">发送</button>
+            </span>
           </div>
         </div>
-        <div v-else class="empty">暂无发布审核请求</div>
+        <div v-else class="empty-card">暂无反馈</div>
       </div>
+    </main>
 
-      <!-- ====== 题目纠错 ====== -->
-      <div v-show="tab === 'reports'">
-        <div class="report-list" v-if="reports.length">
-          <div class="rp-item" v-for="r in reports" :key="r.id">
-            <div class="rp-header">
-              <span class="rp-subject">{{ r.question_subject }}</span>
-              <span class="rp-user">{{ r.username }}</span>
-              <span class="rp-status" :class="r.status">{{ r.status === 'resolved' ? '已处理' : r.status === 'rejected' ? '已驳回' : '待处理' }}</span>
-              <span class="rp-date">{{ r.created_at?.slice(0, 16) }}</span>
-            </div>
-            <div class="rp-q">{{ r.question_text }}</div>
-            <div class="rp-content">{{ r.content }}</div>
-            <div class="rp-reply" v-if="r.reply"><span class="reply-label">回复：</span>{{ r.reply }}</div>
-            <div class="rp-actions" v-if="r.status === 'pending'">
-              <input v-model="replyTexts[r.id]" class="rp-input" placeholder="回复..." @keyup.enter="resolveReport(r.id, 'resolved')" />
-              <button class="btn-xs btn-approve" @click="resolveReport(r.id, 'resolved')">✓ 处理</button>
-              <button class="btn-xs btn-reject" @click="resolveReport(r.id, 'rejected')">✗ 驳回</button>
-            </div>
+    <!-- 用户详情弹窗 -->
+    <div class="modal-overlay" v-if="userDetail" @click.self="userDetail=null">
+      <div class="modal-box">
+        <h3>📊 {{ userDetail.user.username }} 的学习数据</h3>
+        <div class="ud-stats">
+          <div class="ud-c"><strong>{{ userDetail.total }}</strong> 总答题</div>
+          <div class="ud-c ok"><strong>{{ userDetail.correct }}</strong> 正确</div>
+          <div class="ud-c no"><strong>{{ userDetail.wrong }}</strong> 错误</div>
+        </div>
+        <div v-if="userDetail.bySubject?.length" class="ud-chart">
+          <div v-for="s in userDetail.bySubject" :key="s.subject" class="ud-row">
+            <span style="width:4rem">{{ s.subject }}</span>
+            <div class="ud-bar"><div class="ud-fill" :style="{width:s.rate+'%', background: rc(s.rate)}"></div></div>
+            <span style="width:4rem;text-align:right">{{ s.rate }}%</span>
           </div>
         </div>
-        <div v-else class="empty">暂无纠错反馈</div>
+        <button class="modal-close" @click="userDetail=null">关闭</button>
       </div>
-
-      <!-- ====== 意见反馈 ====== -->
-      <div v-show="tab === 'feedbacks'">
-        <div class="feedback-list" v-if="feedbackList.length">
-          <div class="fb-item" v-for="item in feedbackList" :key="item.id">
-            <div class="fb-header">
-              <span class="fb-user">{{ item.username }}</span>
-              <span class="fb-date">{{ item.created_at?.slice(0, 16) }}</span>
-              <span class="fb-status" :class="item.status">{{ item.status === 'replied' ? '已回复' : '待处理' }}</span>
-            </div>
-            <div class="fb-content">{{ item.content }}</div>
-            <div class="fb-images" v-if="item.images?.length">
-              <img v-for="(img, idx) in item.images" :key="idx" :src="img" class="fb-img" @click="previewImg = img" />
-            </div>
-            <div class="fb-reply" v-if="item.reply"><span class="reply-label">回复：</span>{{ item.reply }}</div>
-            <div class="fb-actions" v-if="item.status !== 'replied'">
-              <input v-model="replyTexts[item.id]" class="reply-input" placeholder="回复..." @keyup.enter="reply(item.id)" />
-              <button class="btn-reply" @click="reply(item.id)">发送</button>
-            </div>
-          </div>
-        </div>
-        <div v-else class="empty">暂无反馈</div>
-      </div>
-    </div>
-
-    <!-- 图片预览 -->
-    <div class="modal-overlay" v-if="previewImg" @click="previewImg = null">
-      <img :src="previewImg" class="preview-full" />
     </div>
   </div>
 </template>
@@ -240,360 +260,186 @@ import api from '../api/index.js'
 import { auth } from '../stores/auth.js'
 
 const router = useRouter()
-const tab = ref('subjects')
+const activeTab = ref('overview')
 const overview = ref(null)
 const pendingQuestions = ref([])
 const users = ref([])
 const feedbackList = ref([])
-const replyTexts = ref({})
-const previewImg = ref(null)
-const expandedSubject = ref(null)
-const searchText = ref('')
-
 const reports = ref([])
 const personalSubjects = ref([])
+const publishRequests = ref([])
+const replyTexts = ref({})
+const userDetail = ref(null)
+const expandedSubject = ref(null)
 const selectedIds = ref([])
 const moveTarget = ref('')
-const allSubjects = computed(() => (overview.value?.subjects || []).map(s => s.subject))
-const publishRequests = ref([])
-const userDetail = ref(null)
-
-function rateColor(r) { if(r>=70) return 'var(--success)'; if(r>=40) return 'var(--warning)'; return 'var(--error)' }
-
-function typeLabel(t) { const m = { single_choice: '单选', multi_choice: '多选', true_false: '判断', fill_blank: '填空' }; return m[t] || t }
-function statusLabel(s) { const m = { approved: '已审核', pending: '待审核', rejected: '已拒绝' }; return m[s] || s }
-function isSelf(id) { return auth.user?.id === id }
-
-// 从 overview 中提取 subjects 信息
-const subjects = computed(() => overview.value?.subjects || [])
 const allQuestionsMap = ref({})
 
-function filteredQuestions(subject) {
-  const list = allQuestionsMap.value[subject] || []
-  if (!searchText.value) return list
-  return list.filter(q => q.question.includes(searchText.value))
-}
+function rc(r) { return r>=70 ? 'var(--success)' : r>=40 ? 'var(--warning)' : 'var(--error)' }
+function typeLabel(t) { const m={single_choice:'单选',multi_choice:'多选',true_false:'判断',fill_blank:'填空'};return m[t]||t }
+function statusLabel(s) { const m={approved:'已审核',pending:'待审核',rejected:'已拒绝'};return m[s]||s }
+function isSelf(id) { return auth.user?.id === id }
+
+const subjectList = computed(() => (overview.value?.subjects || []).map(s => s.subject))
+
+const menu = computed(() => [
+  { key:'overview', icon:'📊', label:'仪表盘', badge:0 },
+  { key:'subjects', icon:'📚', label:'题库管理', badge:0 },
+  { key:'pending', icon:'⏳', label:'待审核', badge:overview.value?.pending || 0 },
+  { key:'publish', icon:'📩', label:'发布审核', badge:publishRequests.value.filter(r=>r.status==='pending').length },
+  { key:'reports', icon:'🚨', label:'纠错管理', badge:reports.value.filter(r=>r.status==='pending').length },
+  { key:'feedback', icon:'💬', label:'意见反馈', badge:feedbackList.value.filter(r=>r.status==='pending').length },
+  { key:'users', icon:'👥', label:'用户管理', badge:0 },
+])
+
+const metrics = computed(() => [
+  { icon:'📚', label:'题库', val:overview.value?.subjects?.length || 0, color:'#0071e3' },
+  { icon:'📝', label:'题目', val:overview.value?.questions || 0, color:'#34c759' },
+  { icon:'⏳', label:'待审核', val:overview.value?.pending || 0, color:'#ff9f0a' },
+  { icon:'📊', label:'答题记录', val:overview.value?.records || 0, color:'#5856d6' },
+  { icon:'👥', label:'用户', val:overview.value?.users || 0, color:'#0071e3' },
+])
+
+function subjectQuestions(subject) { return allQuestionsMap.value[subject] || [] }
 
 function toggleSubject(subject) {
   expandedSubject.value = expandedSubject.value === subject ? null : subject
-  if (expandedSubject.value === subject && !allQuestionsMap.value[subject]) {
-    loadSubjectQuestions(subject)
-  }
-  searchText.value = ''
+  if (expandedSubject.value && !allQuestionsMap.value[subject]) loadSubjectQuestions(subject)
 }
 
 async function loadSubjectQuestions(subject) {
-  try {
-    const res = await api.getAllQuestions({ subject })
-    allQuestionsMap.value[subject] = res.data
-  } catch {}
+  try { const r = await api.getAllQuestions({ subject }); allQuestionsMap.value[subject] = r.data } catch {}
 }
+function editQuestion(id) { router.push(`/admin/edit/${id}`) }
 
 async function loadAll() {
   try {
     const [ov, pq, us, fb, rp, ps, pr] = await Promise.all([
-      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(), api.getFeedback(), api.getReports(), api.getPersonalSubjects(), api.getPublishRequests()
+      api.getAdminOverview(), api.getPendingQuestions(), api.getAdminUsers(),
+      api.getFeedback(), api.getReports(), api.getPersonalSubjects(), api.getPublishRequests()
     ])
-    overview.value = ov.data
-    pendingQuestions.value = pq.data
-    users.value = us.data
-    feedbackList.value = fb.data
-    reports.value = rp.data
-    personalSubjects.value = ps.data
-    publishRequests.value = pr.data
+    overview.value = ov.data; pendingQuestions.value = pq.data; users.value = us.data
+    feedbackList.value = fb.data; reports.value = rp.data; personalSubjects.value = ps.data; publishRequests.value = pr.data
   } catch {}
 }
-
 onMounted(loadAll)
 
-async function viewUser(id) {
-  try {
-    const res = await api.getUserDetailStats(id)
-    userDetail.value = res.data
-  } catch {}
-}
+async function deleteOneQuestion(id) { if (!confirm('确定删除？')) return; await api.deleteQuestion(id); if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value); loadAll() }
+async function approveQ(id) { await api.updateQuestionStatus(id,'approved'); if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value); loadAll() }
+async function rejectQ(id) { await api.updateQuestionStatus(id,'rejected'); if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value); loadAll() }
+async function approve(id) { await api.updateQuestionStatus(id,'approved'); pendingQuestions.value = pendingQuestions.value.filter(q=>q.id!==id); loadAll() }
+async function reject(id) { await api.updateQuestionStatus(id,'rejected'); pendingQuestions.value = pendingQuestions.value.filter(q=>q.id!==id); loadAll() }
+async function changeRole(id, role) { if (isSelf(id)) return; await api.updateUserRole(id, role) }
+async function deleteUser(id) { if (isSelf(id) || !confirm('确定删除？')) return; await api.deleteUser(id); users.value = users.value.filter(u=>u.id!==id) }
 
-async function approvePublish(id) {
-  await api.approvePublishRequest(id)
-  const pr = await api.getPublishRequests()
-  publishRequests.value = pr.data
-}
-async function rejectPublish(id) {
-  await api.rejectPublishRequest(id)
-  const pr = await api.getPublishRequests()
-  publishRequests.value = pr.data
-}
+async function viewUser(id) { try { const r = await api.getUserDetailStats(id); userDetail.value = r.data } catch {} }
+async function doBatchMove() { if (!selectedIds.value.length || !moveTarget.value) return; await api.batchMoveQuestions(selectedIds.value, moveTarget.value); selectedIds.value=[]; moveTarget.value=''; if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value); loadAll() }
 
-async function resolveReport(id, status) {
-  const reply = replyTexts.value[id] || ''
-  await api.resolveReport(id, status, reply)
-  replyTexts.value[id] = ''
-  const rp = await api.getReports()
-  reports.value = rp.data
-}
-
-function editQuestion(id) { router.push(`/admin/edit/${id}`) }
-
-async function deleteOneQuestion(id) {
-  if (!confirm('确定删除这道题吗？')) return
-  await api.deleteQuestion(id)
-  // 刷新当前展开的题库
-  if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value)
-  loadAll()
-}
-
-async function approveQ(id) {
-  await api.updateQuestionStatus(id, 'approved')
-  if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value)
-  loadAll()
-}
-async function rejectQ(id) {
-  await api.updateQuestionStatus(id, 'rejected')
-  if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value)
-  loadAll()
-}
-
-async function approve(id) {
-  await api.updateQuestionStatus(id, 'approved')
-  pendingQuestions.value = pendingQuestions.value.filter(q => q.id !== id)
-  loadAll()
-}
-async function reject(id) {
-  await api.updateQuestionStatus(id, 'rejected')
-  pendingQuestions.value = pendingQuestions.value.filter(q => q.id !== id)
-  loadAll()
-}
-async function changeRole(id, role) {
-  if (isSelf(id)) return
-  await api.updateUserRole(id, role)
-}
 async function exportSubject(subject) {
-  try {
-    const res = await api.getAllQuestions({ subject })
-    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = subject + '-题库.json'; a.click()
-    URL.revokeObjectURL(url)
-  } catch {}
+  try { const r = await api.getAllQuestions({ subject }); const b = new Blob([JSON.stringify(r.data,null,2)],{type:'application/json'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=subject+'-题库.json'; a.click(); URL.revokeObjectURL(u) } catch {}
 }
-async function deleteUser(id) {
-  if (isSelf(id) || !confirm('确定删除该用户？')) return
-  await api.deleteUser(id)
-  users.value = users.value.filter(u => u.id !== id)
-}
+async function renameSubject(n) { const s = prompt('新名称：', n); if (!s || s===n) return; await api.renameSubject(n, s); expandedSubject.value = null; allQuestionsMap.value[s] = allQuestionsMap.value[n]; delete allQuestionsMap.value[n]; loadAll() }
+async function deleteSubject(n) { if (!confirm(`删除"${n}"及其所有题目？不可撤销！`)) return; await api.deleteSubject(n); expandedSubject.value = null; loadAll() }
 
-async function renameSubject(oldName) {
-  const newName = prompt('输入新题库名称：', oldName)
-  if (!newName || newName === oldName) return
-  await api.renameSubject(oldName, newName)
-  expandedSubject.value = null
-  // 刷新 subject 列表，同时迁移缓存
-  allQuestionsMap.value[newName] = allQuestionsMap.value[oldName]
-  delete allQuestionsMap.value[oldName]
-  loadAll()
-}
-async function doBatchMove() {
-  if (!selectedIds.value.length || !moveTarget.value) return
-  await api.batchMoveQuestions(selectedIds.value, moveTarget.value)
-  selectedIds.value = []
-  moveTarget.value = ''
-  if (expandedSubject.value) loadSubjectQuestions(expandedSubject.value)
-  loadAll()
-}
-
-async function publishPersonal(subject, userId) {
-  if (!confirm(`确定将"${subject}"发布到公共题库吗？`)) return
-  await api.publishPersonalSubject(subject, userId)
-  const ps = await api.getPersonalSubjects()
-  personalSubjects.value = ps.data
-}
-async function deleteSubject(name) {
-  if (!confirm(`确定删除题库"${name}"及其所有题目？此操作不可撤销！`)) return
-  await api.deleteSubject(name)
-  expandedSubject.value = null
-  loadAll()
-}
-
-async function reply(id) {
-  const text = replyTexts.value[id]
-  if (!text?.trim()) return
-  await api.replyFeedback(id, text.trim())
-  replyTexts.value[id] = ''
-  const fb = await api.getFeedback()
-  feedbackList.value = fb.data
-}
+async function publishPersonal(subject, userId) { if (!confirm(`发布"${subject}"到公共？`)) return; await api.publishPersonalSubject(subject, userId); const r = await api.getPersonalSubjects(); personalSubjects.value = r.data; loadAll() }
+async function approvePublish(id) { await api.approvePublishRequest(id); const r = await api.getPublishRequests(); publishRequests.value = r.data; loadAll() }
+async function rejectPublish(id) { await api.rejectPublishRequest(id); const r = await api.getPublishRequests(); publishRequests.value = r.data; loadAll() }
+async function resolveReport(id, status) { const reply = replyTexts.value[id]||''; await api.resolveReport(id, status, reply); replyTexts.value[id]=''; const r = await api.getReports(); reports.value = r.data }
+async function reply(id) { const t = replyTexts.value[id]; if (!t?.trim()) return; await api.replyFeedback(id, t.trim()); replyTexts.value[id]=''; const r = await api.getFeedback(); feedbackList.value = r.data }
 </script>
 
 <style scoped>
-.page-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 1.2rem 0; margin-bottom: 1rem; }
-.page-header h1 { font-size: 1.3rem; font-weight: 700; }
-.back-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; display: block; margin-bottom: 0.3rem; }
-.back-btn:hover { color: var(--text); }
+.admin-layout { display:flex; min-height:100vh; }
+.admin-sidebar { width:200px; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+.sidebar-brand { display:flex; align-items:center; gap:0.5rem; padding:1rem 1.2rem; border-bottom:1px solid var(--border); }
+.brand-logo { font-size:1.3rem; }
+.brand-text { font-weight:700; font-size:0.95rem; color:var(--text); }
+.sidebar-nav { flex:1; padding:0.5rem 0; }
+.nav-item { display:flex; align-items:center; gap:0.5rem; padding:0.55rem 1.2rem; cursor:pointer; text-decoration:none; color:var(--text); font-size:0.85rem; transition:all 0.1s; }
+.nav-item:hover { background:var(--bg); }
+.nav-item.active { background:rgba(0,113,227,0.08); color:var(--primary); font-weight:500; border-right:3px solid var(--primary); }
+.nav-icon { font-size:1rem; width:1.5rem; text-align:center; }
+.nav-badge { margin-left:auto; background:var(--error); color:#fff; font-size:0.6rem; padding:0.05rem 0.4rem; border-radius:8px; }
+.sidebar-footer { padding:0.8rem 1.2rem; border-top:1px solid var(--border); }
+.back-link { text-decoration:none; color:var(--text-secondary); font-size:0.82rem; }
+.back-link:hover { color:var(--primary); }
 
-.overview-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
-.ov-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 1rem; text-align: center; cursor: pointer; transition: all 0.15s; }
-.ov-card:hover { border-color: var(--primary); }
-.ov-num { display: block; font-size: 1.4rem; font-weight: 700; color: var(--primary); }
-.ov-lbl { font-size: 0.8rem; color: var(--text-secondary); }
-.ov-card.warn .ov-num { color: var(--warning); }
+.admin-main { flex:1; background:var(--bg); padding:1.5rem; overflow-y:auto; }
+.page-title { font-size:1.2rem; font-weight:700; margin-bottom:1rem; }
+.page-title small { font-weight:400; color:var(--text-secondary); font-size:0.85rem; }
 
-.tab-bar { display: flex; gap: 0; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); margin-bottom: 1rem; }
-.tab { flex: 1; padding: 0.65rem; border: none; background: var(--card); cursor: pointer; font-size: 0.85rem; transition: all 0.15s; position: relative; }
-.tab.active { background: var(--primary); color: #fff; font-weight: 600; }
-.tab:not(.active):hover { background: var(--bg); }
-.tab-badge { background: var(--warning); color: #fff; font-size: 0.65rem; padding: 0.05rem 0.35rem; border-radius: 8px; margin-left: 0.3rem; }
+.metrics { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:0.8rem; margin-bottom:1.2rem; }
+.metric-card { display:flex; align-items:center; gap:0.8rem; background:var(--card); border-radius:12px; padding:1rem; border:1px solid var(--border); }
+.metric-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.metric-val { display:block; font-size:1.3rem; font-weight:700; color:var(--text); }
+.metric-lbl { font-size:0.75rem; color:var(--text-secondary); }
 
-/* 题库卡片 */
-.subject-admin-list { display: flex; flex-direction: column; gap: 0.5rem; }
-.subject-admin-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-.sa-header { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1rem; cursor: pointer; transition: background 0.1s; }
-.sa-header:hover { background: var(--bg); }
-.sa-icon { font-size: 0.7rem; color: var(--text-secondary); width: 1rem; }
-.sa-name { font-weight: 600; flex: 1; }
-.sa-count { font-size: 0.8rem; color: var(--text-secondary); }
-.sa-avg { font-size: 0.78rem; color: var(--success); }
-.sa-actions { display: flex; gap: 0.2rem; }
-.btn-sm-icon { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0.15rem; }
-.btn-sm-icon:hover { opacity: 0.7; }
+.section-card { background:var(--card); border-radius:12px; border:1px solid var(--border); margin-bottom:0.8rem; overflow:hidden; }
+.section-card-header { display:flex; justify-content:space-between; align-items:center; padding:0.65rem 1rem; cursor:pointer; font-weight:600; font-size:0.9rem; }
+.section-card-header:hover { background:var(--bg); }
+.sc-actions { display:flex; align-items:center; gap:0.3rem; }
+.sc-count { font-size:0.78rem; color:var(--text-secondary); font-weight:400; margin-right:0.3rem; }
+.sc-btn { background:none; border:none; cursor:pointer; font-size:0.82rem; padding:0.2rem 0.35rem; border-radius:4px; }
+.sc-btn:hover { background:var(--bg); }
+.sc-ok { color:var(--success); }
+.sc-no { color:var(--error); }
+.section-card-body { border-top:1px solid var(--border); }
 
-.sa-body { border-top: 1px solid var(--border); padding: 0.5rem 0; }
-.sa-search { padding: 0.3rem 1rem 0.5rem; }
-.sa-search-input { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.8rem; }
-.sa-search-input:focus { outline: none; border-color: var(--primary); }
-.sa-question { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 1rem; gap: 0.5rem; font-size: 0.82rem; }
-.sa-question:hover { background: var(--bg); }
-.sa-q-info { display: flex; align-items: center; gap: 0.35rem; flex: 1; min-width: 0; }
-.sa-q-actions { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
-.sa-empty { padding: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; }
-.a-type { font-size: 0.65rem; padding: 0.1rem 0.3rem; border-radius: 4px; background: var(--bg); color: var(--text-secondary); flex-shrink: 0; }
-.a-status { font-size: 0.65rem; padding: 0.1rem 0.3rem; border-radius: 4px; flex-shrink: 0; }
-.a-status.approved { background: #d4edda; color: var(--success); }
-.a-status.pending { background: #fff3cd; color: #856404; }
-.a-status.rejected { background: #f8d7da; color: var(--error); }
-.a-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-.a-user { font-size: 0.7rem; color: var(--text-secondary); flex-shrink: 0; }
-.btn-xs { padding: 0.2rem 0.5rem; font-size: 0.65rem; border: none; border-radius: 4px; cursor: pointer; }
-.btn-approve { background: var(--success); color: #fff; }
-.btn-reject { background: var(--error); color: #fff; }
+.aq-table { font-size:0.85rem; }
+.aq-row { display:flex; align-items:center; padding:0.45rem 1rem; gap:0.5rem; border-top:1px solid var(--border); }
+.aq-row:first-child { border-top:none; }
+.aq-header { color:var(--text-secondary); font-size:0.78rem; font-weight:500; }
+.aq-type { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; background:var(--bg); color:var(--text-secondary); }
+.aq-status { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; }
+.aq-status.approved { background:rgba(52,199,89,0.12); color:var(--success); }
+.aq-status.pending { background:rgba(255,159,10,0.12); color:var(--warning); }
+.aq-status.rejected, .aq-status.replied { background:rgba(255,59,48,0.1); color:var(--error); }
+.aq-role { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; }
+.aq-role.admin { background:rgba(0,113,227,0.1); color:var(--primary); }
+.aq-role.user { background:var(--bg); color:var(--text-secondary); }
+.q-cb { width:14px; height:14px; accent-color:var(--primary); cursor:pointer; }
 
-/* 待审核 */
-.review-list { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-.review-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; border-top: 1px solid var(--border); gap: 1rem; }
-.review-item:first-child { border-top: none; }
-.review-info { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; flex-wrap: wrap; }
-.review-subject { font-size: 0.7rem; padding: 0.15rem 0.35rem; border-radius: 4px; background: #e8e8f0; color: #555; }
-.review-type { font-size: 0.7rem; padding: 0.15rem 0.35rem; border-radius: 4px; background: var(--bg); color: var(--text-secondary); }
-.review-q { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.review-user { font-size: 0.7rem; color: var(--text-secondary); }
-.review-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
-
-/* 用户 */
-.user-list { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-.user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; border-top: 1px solid var(--border); }
-.user-item:first-child { border-top: none; }
-.user-info { display: flex; align-items: center; gap: 0.6rem; }
-.user-name { font-weight: 500; }
-.user-role { font-size: 0.65rem; padding: 0.15rem 0.35rem; border-radius: 4px; }
-.user-role.admin { background: #e8f4fd; color: var(--primary); }
-.user-role.user { background: var(--bg); color: var(--text-secondary); }
-.user-date { font-size: 0.7rem; color: var(--text-secondary); }
-.user-actions { display: flex; gap: 0.4rem; align-items: center; }
-.role-select { padding: 0.25rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.75rem; }
-.btn-del { padding: 0.25rem 0.5rem; border: 1px solid var(--error); border-radius: 6px; background: none; color: var(--error); font-size: 0.75rem; cursor: pointer; }
-.btn-del:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-view { padding:0.25rem 0.4rem; border:1px solid var(--primary); border-radius:6px; background:none; color:var(--primary); font-size:0.8rem; cursor:pointer; }
-.q-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--primary); }
-.sa-move-bar { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; border-top:1px solid var(--border); background:var(--bg); font-size:0.8rem; }
-.move-select { padding:0.25rem 0.4rem; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; background:var(--card); color:var(--text); }
-.pr-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
-.pr-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; border-top:1px solid var(--border); }
-.pr-item:first-child { border-top:none; }
-.pr-info { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; flex:1; min-width:0; }
-.pr-subject { font-size:0.7rem; padding:0.1rem 0.35rem; border-radius:4px; background:#e8e8f0; color:#555; flex-shrink:0; }
-.pr-user { font-weight:600; flex-shrink:0; }
-.pr-status { font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:4px; }
-.pr-status.pending { background:#fff3cd; color:#856404; }
-.pr-status.approved { background:#d4edda; color:var(--success); }
-.pr-status.rejected { background:#f8d7da; color:var(--error); }
-.pr-date { color:var(--text-secondary); font-size:0.75rem; margin-left:auto; }
-.pr-actions { display:flex; gap:0.3rem; flex-shrink:0; }
-.sa-card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
-.btn-view:hover { background:var(--primary); color:#fff; }
-
-.report-list { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
-.rp-item { padding:0.8rem; border-top:1px solid var(--border); }
-.rp-item:first-child { border-top:none; }
-.rp-header { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; margin-bottom:0.3rem; flex-wrap:wrap; }
-.rp-subject { font-size:0.65rem; padding:0.1rem 0.3rem; border-radius:4px; background:#e8e8f0; color:#555; }
-.rp-user { font-weight:600; }
-.rp-status { font-size:0.65rem; padding:0.1rem 0.35rem; border-radius:4px; }
-.rp-status.pending { background:#fff3cd; color:#856404; }
-.rp-status.resolved { background:#d4edda; color:var(--success); }
-.rp-status.rejected { background:#f8d7da; color:var(--error); }
-.rp-date { color:var(--text-secondary); margin-left:auto; }
-.rp-q { font-size:0.78rem; color:var(--text-secondary); margin-bottom:0.2rem; }
-.rp-content { font-size:0.85rem; padding:0.4rem; background:var(--bg); border-radius:6px; margin-bottom:0.3rem; }
-.rp-reply { font-size:0.8rem; color:var(--text-secondary); margin-top:0.2rem; }
-.rp-actions { display:flex; gap:0.3rem; margin-top:0.4rem; }
-.rp-input { flex:1; padding:0.3rem 0.5rem; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; background:var(--card); color:var(--text); }
+.move-bar { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; border-top:1px solid var(--border); background:var(--bg); font-size:0.8rem; }
+.move-sel { padding:0.2rem 0.4rem; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; background:var(--card); color:var(--text); }
+.btn-xs { padding:0.2rem 0.5rem; border:none; border-radius:4px; font-size:0.7rem; cursor:pointer; }
+.btn-ok { background:var(--success); color:#fff; }
+.btn-no { background:var(--error); color:#fff; }
+.role-sel { padding:0.2rem; border:1px solid var(--border); border-radius:6px; font-size:0.75rem; background:var(--card); color:var(--text); }
+.rp-input { padding:0.2rem 0.4rem; border:1px solid var(--border); border-radius:4px; font-size:0.78rem; background:var(--card); color:var(--text); }
 .rp-input:focus { outline:none; border-color:var(--primary); }
 
-.ud-stats { display:flex; gap:0.5rem; margin:0.8rem 0; }
-.ud-card { flex:1; text-align:center; padding:0.6rem; background:var(--bg); border-radius:8px; font-size:0.78rem; color:var(--text-secondary); }
-.ud-num { display:block; font-size:1.3rem; font-weight:700; color:var(--primary); }
-.ud-card.correct .ud-num { color:var(--success); }
-.ud-card.wrong .ud-num { color:var(--error); }
-.ud-subjects { margin-bottom:0.8rem; }
-.ud-subj { display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; margin-bottom:0.3rem; }
-.ud-lbl { width:4rem; flex-shrink:0; }
-.ud-bar { flex:1; height:12px; background:#e8e8ec; border-radius:6px; overflow:hidden; }
-.ud-fill { height:100%; border-radius:6px; min-width:4px; }
-.ud-pct { width:4rem; text-align:right; flex-shrink:0; }
-.ud-records h4 { font-size:0.85rem; margin-bottom:0.4rem; }
-.ud-rec { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; padding:0.25rem 0; border-top:1px solid var(--border); }
-.ud-rec-icon { font-weight:700; }
-.ud-rec-icon.ok { color:var(--success); }
-.ud-rec-icon.no { color:var(--error); }
-.ud-rec-q { color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.empty-card { text-align:center; padding:2rem; color:var(--text-secondary); background:var(--card); border-radius:12px; border:1px solid var(--border); }
 
-/* 反馈 */
-.feedback-list { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-.fb-item { padding: 0.8rem; border-top: 1px solid var(--border); }
-.fb-item:first-child { border-top: none; }
-.fb-header { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; margin-bottom: 0.5rem; }
-.fb-user { font-weight: 600; }
-.fb-date { color: var(--text-secondary); }
-.fb-status { font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 4px; }
-.fb-status.pending { background: #fff3cd; color: #856404; }
-.fb-status.replied { background: #d4edda; color: var(--success); }
-.fb-content { font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; }
-.fb-images { display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; }
-.fb-img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
-.fb-reply { margin-top: 0.4rem; padding: 0.4rem; background: var(--bg); border-radius: 6px; font-size: 0.82rem; }
-.reply-label { font-weight: 600; color: var(--primary); }
-.fb-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
-.reply-input { flex: 1; padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; }
-.reply-input:focus { outline: none; border-color: var(--primary); }
-.btn-reply { padding: 0.35rem 0.7rem; border: none; border-radius: 6px; background: var(--primary); color: #fff; font-size: 0.75rem; cursor: pointer; }
+/* 图表 */
+.subject-chart { padding:0.5rem 0; }
+.chart-row { display:flex; align-items:center; gap:0.5rem; padding:0.35rem 1rem; font-size:0.82rem; }
+.chart-lbl { width:5rem; flex-shrink:0; }
+.chart-bar { flex:1; height:12px; background:var(--bg); border-radius:6px; overflow:hidden; }
+.chart-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--primary),#5856d6); min-width:4px; }
+.chart-num { width:3rem; text-align:right; color:var(--text-secondary); }
+.chart-rate { width:3rem; text-align:right; font-weight:600; color:var(--success); }
 
-.empty { text-align: center; padding: 2rem; color: var(--text-secondary); }
+/* 弹窗 */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal-box { background:var(--card); border-radius:14px; padding:1.5rem; width:90%; max-width:480px; max-height:70vh; overflow-y:auto; }
+.modal-box h3 { font-size:1rem; margin-bottom:0.8rem; }
+.ud-stats { display:flex; gap:0.5rem; margin-bottom:0.8rem; }
+.ud-c { flex:1; text-align:center; padding:0.5rem; background:var(--bg); border-radius:8px; font-size:0.82rem; color:var(--text-secondary); }
+.ud-c strong { display:block; font-size:1.2rem; color:var(--primary); }
+.ud-c.ok strong { color:var(--success); }
+.ud-c.no strong { color:var(--error); }
+.ud-chart { margin-bottom:0.8rem; }
+.ud-row { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; padding:0.25rem 0; }
+.ud-bar { flex:1; height:10px; background:var(--bg); border-radius:5px; overflow:hidden; }
+.ud-fill { height:100%; border-radius:5px; min-width:4px; }
+.modal-close { width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:8px; background:none; cursor:pointer; color:var(--text-secondary); font-size:0.85rem; }
+.modal-close:hover { background:var(--bg); }
 
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; cursor: pointer; }
-.modal-wide { width:90%; max-width:520px; max-height:80vh; overflow-y:auto; background:var(--card); border-radius:14px; padding:1.5rem; cursor:default; }
-.modal-wide h3 { font-size:1.1rem; }
-.preview-full { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
-
-@media (max-width: 640px) {
-  .overview-cards { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-  .ov-card { padding: 0.7rem; }
-  .ov-num { font-size: 1.1rem; }
-  .tab { font-size: 0.78rem; padding: 0.5rem; }
-  .sa-header { padding: 0.6rem 0.7rem; flex-wrap: wrap; gap: 0.3rem; }
-  .sa-question { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.4rem 0.7rem; }
-  .sa-q-info { flex-wrap: wrap; }
-  .a-text { white-space: normal; }
-  .review-item { flex-direction: column; align-items: flex-start; }
-  .user-item { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+@media(max-width:768px) {
+  .admin-sidebar { width:56px; }
+  .sidebar-brand .brand-text, .nav-label, .nav-badge, .sidebar-footer .back-link { display:none; }
+  .nav-item { justify-content:center; padding:0.55rem; }
+  .admin-main { padding:0.8rem; }
+  .metrics { grid-template-columns:repeat(2,1fr); }
 }
 </style>

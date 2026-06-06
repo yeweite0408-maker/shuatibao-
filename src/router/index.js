@@ -38,12 +38,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // 管理员访问 '/' 自动跳转到管理后台
+  if (to.path === '/' && auth.isLoggedIn && auth.user?.role === 'admin') {
+    return next({ name: 'AdminDashboard' })
+  }
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else if (to.meta.requiresAdmin && auth.user?.role !== 'admin') {
     next({ name: 'Home' })
   } else if ((to.name === 'Login' || to.name === 'Register') && auth.isLoggedIn) {
-    next({ name: 'Home' })
+    next(auth.user?.role === 'admin' ? { name: 'AdminDashboard' } : { name: 'Home' })
   } else {
     next()
   }

@@ -20,6 +20,7 @@
         <div class="nav-actions">
           <router-link to="/leaderboard" class="nav-icon-btn" title="排行榜">🏆</router-link>
           <router-link to="/feedback" class="nav-icon-btn" title="反馈">💬</router-link>
+          <router-link to="/admin" class="nav-icon-btn" title="管理后台" v-if="auth.isLoggedIn && auth.user.role === 'admin'">⚙️</router-link>
           <button class="nav-icon-btn" @click="toggleTheme" :title="isDark ? '亮色' : '暗色'">{{ isDark ? '☀️' : '🌙' }}</button>
 
           <template v-if="auth.isLoggedIn">
