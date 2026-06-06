@@ -44,7 +44,8 @@
       "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'Generated {len\\(d\\)} questions'\\);[\\(print\\(f'  [{q[\\\\\"type\\\\\"]}] {q[\\\\\"question\\\\\"][:30]}...'\\)\\) for q in d]\")",
       "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'{len\\(d\\)} questions'\\);[print\\(f'  [{q[\\\\\"type\\\\\"]}] {q[\\\\\"question\\\\\"][:40]}'\\) for q in d]\")",
       "Bash(node server/index.js)",
-      "Bash(node server/import-homework.js)"
+      "Bash(node server/import-homework.js)",
+      "Bash(ping -n 2 -w 3 10.36.13.233)"
     ]
   }
 }

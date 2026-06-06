@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'shuati-bao-secret-key-2024'
+// 生产环境必须设置 JWT_SECRET 环境变量
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex')
 
 // 要求登录（必须）
 export function requireAuth(req, res, next) {
